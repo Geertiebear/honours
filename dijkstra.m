@@ -8,7 +8,7 @@ A = [   0 3 0 0 1;
         1 0 0 2 0
     ];
 G = graph(A);
-plot(G);
+plot(G, 'EdgeLabel', G.Edges.Weight);
 
 y = A' * [0; 1; 0; 0; 0;];
 z = A' * [1; 1; 1; 1; 1;];
@@ -20,15 +20,15 @@ D = zeros(1, 5);
 target_node = 5;
 B(2) = 0;
 while 1
+    disp(B);
     avec = ones(5, 1);
     % matrix * vector
     all = A' * avec;
-    disp(all);
     if ~any(all)
         break;
     end
     % min value operation (with AND condition)
-    [dist, idx] = min_with_condition(B, all);
+    idx = min_with_condition(B, all);
     
     nvec = zeros(5, 1);
     nvec(idx) = 1;
@@ -49,7 +49,7 @@ while 1
     end
 end
 
-function [m, idx] = min_with_condition(vec, non_zero_vec)
+function idx = min_with_condition(vec, non_zero_vec)
     m = inf;
     idx = 0;
     for i = 1:length(vec)
