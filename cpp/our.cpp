@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
+#include <cassert>
+#include <iostream>
 
 struct Pair {
 	Pair(int weight, size_t dest)
@@ -79,6 +81,13 @@ static void expand_to_crossbar(IOResult &io_result) {
 			row++;
 			column = 0;
 		}
+		if (offsets.size() <= tuple.i) {
+			offsets.resize(tuple.i + 1);
+			offsets[tuple.i] = row * CROSSBAR_COLS + column;
+
+			edge_counts.resize(tuple.i + 1);
+			edge_counts[tuple.i] = degree;
+		}
 
 		crossbar[row * CROSSBAR_COLS + column] = Pair{tuple.weight, tuple.j};
 		column++;
@@ -101,11 +110,12 @@ static std::vector<int> run_algorithm(size_t start_node) {
 		for (size_t i = 0; i < active_nodes.size(); i++) {
 			if (!active_nodes[i])
 				continue;
-	
+
 			is_active = true;
 			auto num_edges = edge_counts[i];
-			for (size_t j = 0; j < num_edges; j++) {
-				auto sum = crossbar[i * CROSSBAR_COLS + j].weight + d[i];
+			for (size_t n = 0; n < num_edges; n++) {
+				auto j = crossbar[i * CROSSBAR_COLS + n].dest;
+				auto sum = crossbar[i * CROSSBAR_COLS + n].weight + d[i];
 				auto old_d = d[j];
 				d[j] = std::min(old_d, sum);
 				if (d[j] != old_d)
@@ -125,5 +135,8 @@ int main(int argc, char **argv) {
 	crossbar.resize(CROSSBAR_ROWS * CROSSBAR_COLS, Pair{std::numeric_limits<int>::max(), 0});
 	expand_to_crossbar(io_result);
 	auto d = run_algorithm(0);
+	for (auto val : d)
+		std::cout << "d val: " << val << std::endl;
+
 	return 0;
 }
