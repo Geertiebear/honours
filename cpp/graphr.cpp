@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <cassert>
 #include <utility>
+#include <iostream>
 
 std::vector<int> crossbar;
 constexpr unsigned int CROSSBAR_ROWS = 512;
@@ -65,7 +66,8 @@ struct GraphOrdering {
 	}
 
 	bool has_next_subgraph() const {
-		return last_row * CROSSBAR_ROWS < io_result.dimensions && last_column * CROSSBAR_COLS < io_result.dimensions;
+		// We are done when we are finished with the last column.
+		return last_column * CROSSBAR_COLS < io_result.dimensions;
 	}
 
 	void reset_position() {
@@ -95,6 +97,7 @@ static IOResult read_graph(const std::string &path) {
 		sscanf(line, "%ld %ld", &row, &col);
 
 		result.tuples.emplace_back(row, col, 1);
+		result.tuples.emplace_back(col, row, 1);
 	}
 
 	auto max = std::max_element(result.tuples.begin(), result.tuples.end(), [] (auto a, auto b) {
@@ -135,9 +138,11 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 
 	assert(start_node < CROSSBAR_COLS);
 	active_nodes[start_node] = true;
+	d[start_node] = 0;
 
 	bool is_active = true;
 	while (is_active) {
+		is_active = false;
 		while (graph.has_next_subgraph()) {
 			reset_crossbar();
 
@@ -151,6 +156,9 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 				is_active = true;
 				for (size_t j = 0; j < CROSSBAR_COLS; j++) {
 					auto sum = crossbar[i * CROSSBAR_COLS + j] + d[i];
+					if (sum < 0)
+						sum = std::numeric_limits<int>::max();
+
 					auto old_d = d[j];
 					d[j] = std::min(old_d, sum);
 					if (d[j] != old_d)
@@ -169,9 +177,12 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 
 int main(int argc, char **argv) {
 	auto io_result = read_graph(argv[1]);
+	std::cout << "dimensions: " << io_result.dimensions << std::endl;
 	crossbar.resize(CROSSBAR_ROWS * CROSSBAR_COLS, std::numeric_limits<int>::max());
 
 	GraphOrdering ordering(io_result);
 	auto d = run_algorithm(0, ordering);
+	for (auto d_val : d)
+		std::cout << "d_val: " << d_val << std::endl;;
 	return 0;
 }
