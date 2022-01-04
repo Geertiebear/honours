@@ -25,6 +25,13 @@ struct IOResult {
 	size_t dimensions;
 };
 
+struct Statistics {
+	uint64_t write_ops;
+	uint64_t read_ops;
+	uint64_t additions;
+	uint64_t mins;
+} stats;
+
 struct GraphOrdering {
 	GraphOrdering(IOResult &io_result)
 	: io_result(std::move(io_result)), current_row(0), current_column(0), next_row(0),
@@ -173,6 +180,7 @@ static void run_algorithm(std::vector<int> &d, size_t start_node, GraphOrdering 
 
 			auto tuples = graph.next_subgraph();
 			expand_to_crossbar(tuples, graph.get_row_offset(), graph.get_col_offset());
+			stats.write_ops++;
 
 			for (size_t i = 0; i < CROSSBAR_ROWS; i++) {
 				auto real_row = i + graph.get_row_offset();
@@ -183,12 +191,15 @@ static void run_algorithm(std::vector<int> &d, size_t start_node, GraphOrdering 
 
 				is_active = true;
 				for (size_t j = 0; j < CROSSBAR_COLS; j++) {
+					stats.read_ops++;
 					auto real_col = j + graph.get_col_offset();
 					auto sum = crossbar[i * CROSSBAR_COLS + j] + d[real_row];
+					stats.additions++;
 					if (sum < 0)
 						sum = std::numeric_limits<int>::max();
 					auto old_d = d[real_col];
 					d[real_col] = std::min(old_d, sum);
+					stats.mins++;
 					if (d[real_col] != old_d) {
 						changed_nodes[real_col] = true;
 					}
@@ -204,6 +215,7 @@ static void run_algorithm(std::vector<int> &d, size_t start_node, GraphOrdering 
 
 
 int main(int argc, char **argv) {
+	stats = Statistics{};
 	auto io_result = read_graph(argv[1]);
 	std::cout << "dimensions: " << io_result.dimensions << std::endl;
 	crossbar.resize(CROSSBAR_ROWS * CROSSBAR_COLS, std::numeric_limits<int>::max());
@@ -213,5 +225,11 @@ int main(int argc, char **argv) {
 	run_algorithm(d, 0, ordering);
 	for (auto d_val : d)
 		std::cout << "d_val: " << d_val << std::endl;
+
+	std::cout << "Statistics:" << std::endl;
+	std::cout << "writes: " << stats.write_ops << "\n"
+		<< "reads: " << stats.read_ops << "\n"
+		<< "additions: " << stats.additions << "\n"
+		<< "mins: " << stats.mins << "\n";
 	return 0;
 }
