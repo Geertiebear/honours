@@ -34,6 +34,89 @@ struct IOResult {
 	size_t dimensions;
 };
 
+constexpr auto round_up(const auto a, const auto b) {
+	return ((a + b - 1) / b)*b;
+}
+
+struct GraphOrdering {
+	GraphOrdering(IOResult &io_result)
+	: io_result(std::move(io_result)), current_row(0), current_column(0), next_row(0),
+	next_column(0) {
+		// Sort the edges by increasing column.
+		std::sort(io_result.tuples.begin(), io_result.tuples.end(), [] (auto a, auto b) {
+			if (a.j == b.j)
+				return a.i < b.i;
+			return a.j < b.j;
+		});
+	}
+
+	std::vector<Tuple> next_subgraph() {
+		// Two steps: first find lower and upper bound for columns.
+		// Then find lower and upper bound for rows.
+
+		current_row = next_row;
+		current_column = next_column;
+		auto lower_column = std::lower_bound(io_result.tuples.begin(), io_result.tuples.end(), Tuple{0, current_column * CROSSBAR_COLS, 0}, [] (auto a, auto b) {
+			return a.j < b.j;
+		});
+
+		auto upper_column = std::upper_bound(io_result.tuples.begin(), io_result.tuples.end(), Tuple{0, (current_column + 1) * CROSSBAR_COLS, 0}, [] (auto a, auto b) {
+			return a.j < b.j;
+		});
+
+		auto lower_row = std::lower_bound(lower_column, upper_column, Tuple{current_row * CROSSBAR_ROWS, 0, 0}, [] (auto a, auto b) {
+			return a.i < b.i;
+		});
+
+		auto upper_row = std::upper_bound(lower_column, upper_column, Tuple{(current_row + 1) * CROSSBAR_ROWS, 0, 0}, [] (auto a, auto b) {
+			return a.i < b.i;
+		});
+
+		next_row++;
+		if (next_row * CROSSBAR_ROWS >= io_result.dimensions) {
+			next_row = 0;
+			next_column++;
+		}
+
+		return std::vector<Tuple>(lower_row, upper_row);
+	}
+
+	bool has_next_subgraph() const {
+		// We are done when we are finished with the last column.
+		return (next_column) * CROSSBAR_COLS < ((io_result.dimensions + CROSSBAR_COLS - 1)/CROSSBAR_COLS)*CROSSBAR_COLS;
+	}
+
+	bool last_column() const {
+		return (current_column + 1) * CROSSBAR_COLS < ((io_result.dimensions + CROSSBAR_COLS - 1)/CROSSBAR_COLS)*CROSSBAR_COLS;
+	}
+
+	void reset_position() {
+		current_row = 0;
+		current_column = 0;
+		next_row = 0;
+		next_column = 0;
+	}
+
+	size_t get_col_offset() const {
+		return current_column * CROSSBAR_COLS;
+	}
+
+	size_t get_row_offset() const {
+		return current_row * CROSSBAR_ROWS;
+	}
+
+	size_t get_dimensions() const {
+		return io_result.dimensions;
+	}
+
+	IOResult io_result;
+private:
+	size_t current_row;
+	size_t current_column;
+	size_t next_row;
+	size_t next_column;
+};
+
 // This function reads the graph from a file and
 // turns it into a set of tuples (u, v, 1). We also
 // determine the size of the graph by the maximum
@@ -51,7 +134,7 @@ static IOResult read_graph(const std::string &path) {
 		sscanf(line, "%ld %ld", &row, &col);
 
 		result.tuples.emplace_back(row, col, 1);
-		result.degrees.resize(std::max(row, result.degrees.size()));
+		result.degrees.resize(std::max(row, result.degrees.size()) + 1);
 		result.degrees[row] += 1;
 	}
 
@@ -69,12 +152,12 @@ static IOResult read_graph(const std::string &path) {
 	return result;
 }
 
-static void expand_to_crossbar(IOResult &io_result) {
-	if (io_result.dimensions >= CROSSBAR_ROWS)
+static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tuples) {
+	if (tuples.size() >= CROSSBAR_ROWS * CROSSBAR_COLS)
 		throw std::runtime_error("graph too large to fit into crossbar!");
 
 	size_t row = 0, column = 0;
-	for (auto &tuple : io_result.tuples) {
+	for (auto &tuple : tuples) {
 		auto degree = io_result.degrees[tuple.i];
 		assert(degree <= CROSSBAR_COLS);
 		if (degree > CROSSBAR_COLS - column) {
@@ -94,36 +177,58 @@ static void expand_to_crossbar(IOResult &io_result) {
 	}
 }
 
+static void reset_crossbar() {
+	for (auto &val : crossbar)
+		val = Pair{std::numeric_limits<int>::max(), 0};
+}
+
 // This function runs the actual SSSP algorithm, taking as parameter the start node,
 // and outputting the "d" vector. We maintain a vector of active nodes,
 // and we iterate and go through the crossbar row for which there is an active node.
 // The function is pretty much exactly what GraphR also implements in their paper.
-static std::vector<int> run_algorithm(size_t start_node) {
+static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 	std::vector<int> d(CROSSBAR_COLS, std::numeric_limits<int>::max());
-	std::vector<bool> active_nodes(CROSSBAR_COLS);
+	std::vector<bool> active_nodes(round_up(graph.get_dimensions(), CROSSBAR_COLS));
+	std::vector<bool> changed_nodes(round_up(graph.get_dimensions(), CROSSBAR_COLS));
 
 	assert(start_node < CROSSBAR_COLS);
 	active_nodes[start_node] = true;
+	d[start_node] = 0;
 
 	bool is_active = true;
 	while (is_active) {
-		for (size_t i = 0; i < active_nodes.size(); i++) {
-			if (!active_nodes[i])
-				continue;
+		is_active = false;
+		graph.reset_position();
 
-			is_active = true;
-			auto num_edges = edge_counts[i];
-			for (size_t n = 0; n < num_edges; n++) {
-				auto j = crossbar[i * CROSSBAR_COLS + n].dest;
-				auto sum = crossbar[i * CROSSBAR_COLS + n].weight + d[i];
-				auto old_d = d[j];
-				d[j] = std::min(old_d, sum);
-				if (d[j] != old_d)
-					active_nodes[j] = true;
+		while (graph.has_next_subgraph()) {
+			reset_crossbar();
+
+			auto tuples = graph.next_subgraph();
+			expand_to_crossbar(graph.io_result, tuples);
+
+			for (size_t i = 0; i < active_nodes.size(); i++) {
+				if (!active_nodes[i])
+					continue;
+
+				is_active = true;
+				auto num_edges = edge_counts[i];
+				for (size_t n = 0; n < num_edges; n++) {
+					auto j = crossbar[i * CROSSBAR_COLS + n].dest;
+					auto sum = crossbar[i * CROSSBAR_COLS + n].weight + d[i];
+
+					if (sum < 0)
+						sum = std::numeric_limits<int>::max();
+
+					auto old_d = d[j];
+					d[j] = std::min(old_d, sum);
+					if (d[j] != old_d)
+						changed_nodes[j] = true;
+				}
 			}
-
-			active_nodes[i] = false;
 		}
+		active_nodes = changed_nodes;
+		changed_nodes.clear();
+		changed_nodes.resize(round_up(graph.get_dimensions(), CROSSBAR_COLS));
 	}
 
 	return d;
@@ -132,9 +237,9 @@ static std::vector<int> run_algorithm(size_t start_node) {
 
 int main(int argc, char **argv) {
 	auto io_result = read_graph(argv[1]);
+	GraphOrdering ordering(io_result);
 	crossbar.resize(CROSSBAR_ROWS * CROSSBAR_COLS, Pair{std::numeric_limits<int>::max(), 0});
-	expand_to_crossbar(io_result);
-	auto d = run_algorithm(0);
+	auto d = run_algorithm(0, ordering);
 	for (auto val : d)
 		std::cout << "d val: " << val << std::endl;
 
