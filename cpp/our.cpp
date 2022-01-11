@@ -134,8 +134,13 @@ static IOResult read_graph(const std::string &path) {
 		sscanf(line, "%ld %ld", &row, &col);
 
 		result.tuples.emplace_back(row, col, 1);
-		result.degrees.resize(std::max(row, result.degrees.size()) + 1);
+		result.tuples.emplace_back(col, row, 1);
+
+		auto max = std::max(row, col);
+
+		result.degrees.resize(std::max(max, result.degrees.size()) + 1);
 		result.degrees[row] += 1;
+		result.degrees[col] += 1;
 	}
 
 	auto max = std::max_element(result.tuples.begin(), result.tuples.end(), [] (auto a, auto b) {
@@ -146,7 +151,7 @@ static IOResult read_graph(const std::string &path) {
 	std::sort(result.tuples.begin(), result.tuples.end(), [&] (auto a, auto b) {
 		return result.degrees[a.i] < result.degrees[b.i];
 	});
-	result.dimensions = std::max(max->i, max->j);
+	result.dimensions = std::max(max->i, max->j) + 1;
 
 	fclose(fp);
 	return result;
@@ -158,6 +163,7 @@ static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tu
 
 	size_t row = 0, column = 0;
 	for (auto &tuple : tuples) {
+		std::cout << "adding " << tuple.i << std::endl;
 		auto degree = io_result.degrees[tuple.i];
 		assert(degree <= CROSSBAR_COLS);
 		if (degree > CROSSBAR_COLS - column) {
@@ -207,25 +213,34 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 			expand_to_crossbar(graph.io_result, tuples);
 
 			for (size_t i = 0; i < active_nodes.size(); i++) {
+				auto real_row = i + graph.get_row_offset();
 				if (!active_nodes[i])
 					continue;
 
+				std::cout << "active node: " << real_row << std::endl;
+
 				is_active = true;
-				auto num_edges = edge_counts[i];
+				auto num_edges = edge_counts[real_row];
+				std::cout << "num_edges: " << num_edges << std::endl;
+				auto offset = offsets[real_row];
 				for (size_t n = 0; n < num_edges; n++) {
-					auto j = crossbar[i * CROSSBAR_COLS + n].dest;
-					auto sum = crossbar[i * CROSSBAR_COLS + n].weight + d[i];
+					std::cout << "summing for active node " << real_row << std::endl;
+					auto j = crossbar[offset + n].dest;
+					auto sum = crossbar[offset + n].weight + d[real_row];
 
 					if (sum < 0)
 						sum = std::numeric_limits<int>::max();
 
 					auto old_d = d[j];
 					d[j] = std::min(old_d, sum);
-					if (d[j] != old_d)
+					if (d[j] != old_d) {
 						changed_nodes[j] = true;
+						std::cout << "activated node: " << j << std::endl;
+					}
 				}
 			}
 		}
+
 		active_nodes = changed_nodes;
 		changed_nodes.clear();
 		changed_nodes.resize(round_up(graph.get_dimensions(), CROSSBAR_COLS));
