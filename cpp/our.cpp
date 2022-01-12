@@ -163,7 +163,6 @@ static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tu
 
 	size_t row = 0, column = 0;
 	for (auto &tuple : tuples) {
-		std::cout << "adding " << tuple.i << std::endl;
 		auto degree = io_result.degrees[tuple.i];
 		assert(degree <= CROSSBAR_COLS);
 		if (degree > CROSSBAR_COLS - column) {
@@ -172,12 +171,11 @@ static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tu
 		}
 		if (offsets.size() <= tuple.i) {
 			offsets.resize(tuple.i + 1);
-			offsets[tuple.i] = row * CROSSBAR_COLS + column;
-
 			edge_counts.resize(tuple.i + 1);
-			edge_counts[tuple.i] = degree;
 		}
 
+		offsets[tuple.i] = row * CROSSBAR_COLS + column;
+		edge_counts[tuple.i] = degree;
 		crossbar[row * CROSSBAR_COLS + column] = Pair{tuple.weight, tuple.j};
 		column++;
 	}
@@ -224,8 +222,9 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 				std::cout << "num_edges: " << num_edges << std::endl;
 				auto offset = offsets[real_row];
 				for (size_t n = 0; n < num_edges; n++) {
-					std::cout << "summing for active node " << real_row << std::endl;
 					auto j = crossbar[offset + n].dest;
+					std::cout << "summing for active node " << real_row << " with j " << j << std::endl;
+					std::cout << "crossbar weight is " << crossbar[offset + n].weight << std::endl;
 					auto sum = crossbar[offset + n].weight + d[real_row];
 
 					if (sum < 0)
