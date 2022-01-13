@@ -174,7 +174,8 @@ static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tu
 			edge_counts.resize(tuple.i + 1);
 		}
 
-		offsets[tuple.i] = row * CROSSBAR_COLS + column;
+		if (crossbar[offsets[tuple.i]].weight == std::numeric_limits<int>::max())
+			offsets[tuple.i] = row * CROSSBAR_COLS + column;
 		edge_counts[tuple.i] = degree;
 		crossbar[row * CROSSBAR_COLS + column] = Pair{tuple.weight, tuple.j};
 		column++;
