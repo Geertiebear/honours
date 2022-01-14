@@ -148,10 +148,10 @@ static IOResult read_graph(const std::string &path) {
 			return a.j < b.j;
 		return a.i < b.i;
 	});
+	result.dimensions = std::max(max->i, max->j) + 1;
 	std::sort(result.tuples.begin(), result.tuples.end(), [&] (auto a, auto b) {
 		return result.degrees[a.i] < result.degrees[b.i];
 	});
-	result.dimensions = std::max(max->i, max->j) + 1;
 
 	fclose(fp);
 	return result;
@@ -195,7 +195,7 @@ static void reset_crossbar() {
 // and we iterate and go through the crossbar row for which there is an active node.
 // The function is pretty much exactly what GraphR also implements in their paper.
 static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
-	std::vector<int> d(CROSSBAR_COLS, std::numeric_limits<int>::max());
+	std::vector<int> d(round_up(graph.get_dimensions(), CROSSBAR_COLS), std::numeric_limits<int>::max());
 	std::vector<bool> active_nodes(round_up(graph.get_dimensions(), CROSSBAR_COLS));
 	std::vector<bool> changed_nodes(round_up(graph.get_dimensions(), CROSSBAR_COLS));
 
@@ -214,21 +214,16 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 			auto tuples = graph.next_subgraph();
 			expand_to_crossbar(graph.io_result, tuples);
 
-			for (size_t i = 0; i < active_nodes.size(); i++) {
+			for (size_t i = 0; i < CROSSBAR_COLS; i++) {
 				auto real_row = i + graph.get_row_offset();
 				if (!active_nodes[i])
 					continue;
 
-				std::cout << "active node: " << real_row << std::endl;
-
 				is_active = true;
 				auto num_edges = edge_counts[real_row];
-				std::cout << "num_edges: " << num_edges << std::endl;
 				auto offset = offsets[real_row];
 				for (size_t n = 0; n < num_edges; n++) {
 					auto j = crossbar[offset + n].dest;
-					std::cout << "summing for active node " << real_row << " with j " << j << std::endl;
-					std::cout << "crossbar weight is " << crossbar[offset + n].weight << std::endl;
 					auto sum = crossbar[offset + n].weight + d[real_row];
 
 					if (sum < 0)
@@ -236,10 +231,8 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 
 					auto old_d = d[j];
 					d[j] = std::min(old_d, sum);
-					if (d[j] != old_d) {
+					if (d[j] != old_d)
 						changed_nodes[j] = true;
-						std::cout << "activated node: " << j << std::endl;
-					}
 				}
 			}
 		}
@@ -255,6 +248,7 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 
 int main(int argc, char **argv) {
 	auto io_result = read_graph(argv[1]);
+	std::cout << "dimensions: " << io_result.dimensions << std::endl;
 	GraphOrdering ordering(io_result);
 	crossbar.resize(CROSSBAR_ROWS * CROSSBAR_COLS, Pair{std::numeric_limits<int>::max(), 0});
 	auto d = run_algorithm(0, ordering);
