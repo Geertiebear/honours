@@ -28,6 +28,13 @@ struct Tuple {
 	int weight;
 };
 
+struct Statistics {
+	uint64_t write_ops;
+	uint64_t read_ops;
+	uint64_t additions;
+	uint64_t mins;
+} stats;
+
 struct IOResult {
 	std::vector<Tuple> tuples;
 	std::vector<size_t> degrees;
@@ -213,6 +220,7 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 
 			auto tuples = graph.next_subgraph();
 			expand_to_crossbar(graph.io_result, tuples);
+			stats.write_ops++;
 
 			for (size_t i = 0; i < CROSSBAR_COLS; i++) {
 				auto real_row = i + graph.get_row_offset();
@@ -223,14 +231,17 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 				auto num_edges = edge_counts[real_row];
 				auto offset = offsets[real_row];
 				for (size_t n = 0; n < num_edges; n++) {
+					stats.read_ops++;
 					auto j = crossbar[offset + n].dest;
 					auto sum = crossbar[offset + n].weight + d[real_row];
+					stats.additions++;
 
 					if (sum < 0)
 						sum = std::numeric_limits<int>::max();
 
 					auto old_d = d[j];
 					d[j] = std::min(old_d, sum);
+					stats.mins++;
 					if (d[j] != old_d)
 						changed_nodes[j] = true;
 				}
@@ -247,6 +258,7 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 
 
 int main(int argc, char **argv) {
+	stats = Statistics{};
 	auto io_result = read_graph(argv[1]);
 	std::cout << "dimensions: " << io_result.dimensions << std::endl;
 	GraphOrdering ordering(io_result);
@@ -255,5 +267,10 @@ int main(int argc, char **argv) {
 	for (auto val : d)
 		std::cout << "d val: " << val << std::endl;
 
+	std::cout << "Statistics:" << std::endl;
+	std::cout << "writes: " << stats.write_ops << "\n"
+		<< "reads: " << stats.read_ops << "\n"
+		<< "additions: " << stats.additions << "\n"
+		<< "mins: " << stats.mins << "\n";
 	return 0;
 }

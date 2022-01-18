@@ -66,10 +66,10 @@ struct GraphOrdering {
 			return a.i < b.i;
 		});
 
-		next_row++;
-		if (next_row * CROSSBAR_ROWS >= io_result.dimensions) {
-			next_row = 0;
-			next_column++;
+		next_column++;
+		if (next_column * CROSSBAR_ROWS >= io_result.dimensions) {
+			next_column = 0;
+			next_row++;
 		}
 
 		return std::vector<Tuple>(lower_row, upper_row);
@@ -77,11 +77,11 @@ struct GraphOrdering {
 
 	bool has_next_subgraph() const {
 		// We are done when we are finished with the last column.
-		return (next_column) * CROSSBAR_COLS < ((io_result.dimensions + CROSSBAR_COLS - 1)/CROSSBAR_COLS)*CROSSBAR_COLS;
+		return (next_row) * CROSSBAR_COLS < ((io_result.dimensions + CROSSBAR_COLS - 1)/CROSSBAR_COLS)*CROSSBAR_COLS;
 	}
 
 	bool last_column() const {
-		return (current_column + 1) * CROSSBAR_COLS < ((io_result.dimensions + CROSSBAR_COLS - 1)/CROSSBAR_COLS)*CROSSBAR_COLS;
+		return (current_row + 1) * CROSSBAR_COLS < ((io_result.dimensions + CROSSBAR_COLS - 1)/CROSSBAR_COLS)*CROSSBAR_COLS;
 	}
 
 	void reset_position() {
