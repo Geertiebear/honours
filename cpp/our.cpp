@@ -17,8 +17,8 @@ struct Pair {
 std::vector<size_t> offsets;
 std::vector<size_t> edge_counts;
 std::vector<Pair> crossbar;
-constexpr unsigned int CROSSBAR_ROWS = 512;
-constexpr unsigned int CROSSBAR_COLS = 512;
+constexpr unsigned int CROSSBAR_ROWS = 2048;
+constexpr unsigned int CROSSBAR_COLS = 2048;
 
 struct Tuple {
 	Tuple(size_t i, size_t j ,int weight)
@@ -132,8 +132,8 @@ static IOResult read_graph(const std::string &path) {
 	FILE *fp = fopen(path.c_str(), "r");
 	IOResult result{};
 
-	char line[128];
-	while (fgets(line, 128, fp)) {
+	char line[256];
+	while (fgets(line, 256, fp)) {
 		if (!line[0] || line[0] == '%' || line[0] == '#')
 			continue;
 
@@ -157,8 +157,11 @@ static IOResult read_graph(const std::string &path) {
 	});
 	result.dimensions = std::max(max->i, max->j) + 1;
 	std::sort(result.tuples.begin(), result.tuples.end(), [&] (auto a, auto b) {
-		return result.degrees[a.i] < result.degrees[b.i];
+		if (a.i == b.i)
+			return a.j < b.j;
+		return a.i < b.i;
 	});
+	std::cout << "result num_tuples: " << result.tuples.size() << std::endl;
 
 	fclose(fp);
 	return result;
@@ -171,6 +174,8 @@ static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tu
 	size_t row = 0, column = 0;
 	for (auto &tuple : tuples) {
 		auto degree = io_result.degrees[tuple.i];
+		if (degree > CROSSBAR_COLS)
+			std::cout << "too large degree: " << degree << std::endl;
 		assert(degree <= CROSSBAR_COLS);
 		if (degree > CROSSBAR_COLS - column) {
 			row++;
@@ -219,6 +224,8 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 			reset_crossbar();
 
 			auto tuples = graph.next_subgraph();
+			if (tuples.empty())
+				continue;
 			expand_to_crossbar(graph.io_result, tuples);
 			stats.write_ops++;
 
@@ -263,7 +270,7 @@ int main(int argc, char **argv) {
 	std::cout << "dimensions: " << io_result.dimensions << std::endl;
 	GraphOrdering ordering(io_result);
 	crossbar.resize(CROSSBAR_ROWS * CROSSBAR_COLS, Pair{std::numeric_limits<int>::max(), 0});
-	auto d = run_algorithm(0, ordering);
+	auto d = run_algorithm(5, ordering);
 	for (auto val : d)
 		std::cout << "d val: " << val << std::endl;
 
