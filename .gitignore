@@ -1,4 +1,5 @@
 !*.m
 cpp/*
 !*.cpp
+!*.hpp
 !.gitignore

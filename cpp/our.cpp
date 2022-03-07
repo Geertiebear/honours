@@ -7,18 +7,28 @@
 #include <cassert>
 #include <iostream>
 
+#include "crossbar.hpp"
+
 struct Pair {
+	Pair()
+	: weight(std::numeric_limits<int>::max()), dest(0)
+	{}
 	Pair(int weight, size_t dest)
-	: weight(weight), dest(dest) {}
+	: weight(weight), dest(dest)
+	{}
+
+	Pair operator+(int b) {
+		return Pair{weight + b, dest};
+	}
+
 	int weight;
 	size_t dest;
 };
 
-std::vector<size_t> offsets;
 std::vector<size_t> edge_counts;
-std::vector<Pair> crossbar;
 constexpr unsigned int CROSSBAR_ROWS = 2048;
 constexpr unsigned int CROSSBAR_COLS = 2048;
+Crossbar<Pair, CROSSBAR_ROWS, CROSSBAR_COLS, 16, 4> crossbar("ours.log");
 
 struct Tuple {
 	Tuple(size_t i, size_t j ,int weight)
@@ -27,6 +37,8 @@ struct Tuple {
 	size_t i, j;
 	int weight;
 };
+
+std::vector<Tuple> offsets;
 
 struct Statistics {
 	uint64_t write_ops;
@@ -172,34 +184,38 @@ static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tu
 		throw std::runtime_error("graph too large to fit into crossbar!");
 
 	size_t row = 0, column = 0;
+	std::array<Pair, CROSSBAR_COLS> vals;
 	for (auto &tuple : tuples) {
 		auto degree = io_result.degrees[tuple.i];
 		if (degree > CROSSBAR_COLS)
 			std::cout << "too large degree: " << degree << std::endl;
 		assert(degree <= CROSSBAR_COLS);
 		if (degree > CROSSBAR_COLS - column) {
+			crossbar.writeRow(row, 0, CROSSBAR_COLS, vals);
 			row++;
 			column = 0;
+			vals.fill(Pair{});
 		}
 		if (offsets.size() <= tuple.i) {
-			offsets.resize(tuple.i + 1);
+			offsets.resize(tuple.i + 1, Tuple{0, 0, std::numeric_limits<int>::max()});
 			edge_counts.resize(tuple.i + 1);
 		}
 
 		auto offset = row * CROSSBAR_COLS + column;
-		if (crossbar[offsets[tuple.i]].weight == std::numeric_limits<int>::max())
-			offsets[tuple.i] = row * CROSSBAR_COLS + column;
-		if ((offset - offsets[tuple.i]) > degree)
-			offsets[tuple.i] = row * CROSSBAR_COLS + column;
+		if (offsets[tuple.i].weight == std::numeric_limits<int>::max())
+			offsets[tuple.i] = Tuple{row, column, 0};
+		auto old_offset = offsets[tuple.i].i * CROSSBAR_COLS + offsets[tuple.i].j;
+		if ((offset - old_offset) > degree)
+			offsets[tuple.i] = Tuple{row, offsets[tuple.i].j, 0};
 		edge_counts[tuple.i] = degree;
-		crossbar[row * CROSSBAR_COLS + column] = Pair{tuple.weight, tuple.j};
+		vals[column] = Pair{tuple.weight, tuple.j};
 		column++;
 	}
+	crossbar.writeRow(row, 0, CROSSBAR_COLS, vals);
 }
 
 static void reset_crossbar() {
-	for (auto &val : crossbar)
-		val = Pair{std::numeric_limits<int>::max(), 0};
+	crossbar.clear();
 }
 
 // This function runs the actual SSSP algorithm, taking as parameter the start node,
@@ -237,18 +253,16 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 				is_active = true;
 				auto num_edges = edge_counts[real_row];
 				auto offset = offsets[real_row];
-				for (size_t n = 0; n < num_edges; n++) {
-					stats.read_ops++;
-					auto j = crossbar[offset + n].dest;
-					auto sum = crossbar[offset + n].weight + d[real_row];
-					stats.additions++;
+				auto read_result = crossbar.readWithInput(offset.i, offset.j, num_edges, d[real_row]);
+				for (auto pair : read_result) {
+					auto j = pair.dest;
+					auto sum = pair.weight;
 
 					if (sum < 0)
 						sum = std::numeric_limits<int>::max();
 
 					auto old_d = d[j];
 					d[j] = std::min(old_d, sum);
-					stats.mins++;
 					if (d[j] != old_d)
 						changed_nodes[j] = true;
 				}
@@ -269,7 +283,6 @@ int main(int argc, char **argv) {
 	auto io_result = read_graph(argv[1]);
 	std::cout << "dimensions: " << io_result.dimensions << std::endl;
 	GraphOrdering ordering(io_result);
-	crossbar.resize(CROSSBAR_ROWS * CROSSBAR_COLS, Pair{std::numeric_limits<int>::max(), 0});
 	auto d = run_algorithm(5, ordering);
 	for (auto val : d)
 		std::cout << "d val: " << val << std::endl;
