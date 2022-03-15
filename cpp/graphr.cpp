@@ -8,9 +8,7 @@
 #include <utility>
 #include <iostream>
 
-std::vector<int> crossbar;
-constexpr unsigned int CROSSBAR_ROWS = 512;
-constexpr unsigned int CROSSBAR_COLS = 512;
+#include "crossbar.hpp"
 
 struct Tuple {
 	Tuple(size_t i, size_t j ,int weight)
@@ -32,9 +30,34 @@ struct Statistics {
 	uint64_t mins;
 } stats;
 
+struct Pair {
+	Pair()
+	: weight(std::numeric_limits<int>::max()), dest(0)
+	{}
+	Pair(int weight, size_t dest)
+	: weight(weight), dest(dest)
+	{}
+
+	Pair operator+(int b) {
+		return Pair{weight + b, dest};
+	}
+
+	int weight;
+	size_t dest;
+};
+
+constexpr auto round_up(const auto a, const auto b) {
+	return ((a + b - 1) / b)*b;
+}
+
+constexpr unsigned int CROSSBAR_ROWS = 2048;
+constexpr unsigned int CROSSBAR_COLS = 2048;
+Crossbar<Pair, CROSSBAR_ROWS, CROSSBAR_COLS, 16, 4> crossbar("graphr.log");
+
+
 struct GraphOrdering {
-	GraphOrdering(IOResult &io_result)
-	: io_result(std::move(io_result)), current_row(0), current_column(0), next_row(0),
+	GraphOrdering(IOResult &pio_result)
+	: io_result(std::move(pio_result)), current_row(0), current_column(0), next_row(0),
 	next_column(0) {
 		// Sort the edges by increasing column.
 		std::sort(io_result.tuples.begin(), io_result.tuples.end(), [] (auto a, auto b) {
@@ -54,15 +77,22 @@ struct GraphOrdering {
 			return a.j < b.j;
 		});
 
-		auto upper_column = std::upper_bound(io_result.tuples.begin(), io_result.tuples.end(), Tuple{0, (current_column + 1) * CROSSBAR_COLS, 0}, [] (auto a, auto b) {
+		auto upper_column = std::upper_bound(io_result.tuples.begin(), io_result.tuples.end(), Tuple{0, (current_column + 1) * CROSSBAR_COLS - 1, 0}, [] (auto a, auto b) {
 			return a.j < b.j;
 		});
 
-		auto lower_row = std::lower_bound(lower_column, upper_column, Tuple{current_row * CROSSBAR_ROWS, 0, 0}, [] (auto a, auto b) {
+		std::vector<Tuple> intermediate(lower_column, upper_column);
+		std::sort(intermediate.begin(), intermediate.end(), [] (auto a, auto b) {
+			if (a.i == b.i)
+				return a.j < b.j;
 			return a.i < b.i;
 		});
 
-		auto upper_row = std::upper_bound(lower_column, upper_column, Tuple{(current_row + 1) * CROSSBAR_ROWS, 0, 0}, [] (auto a, auto b) {
+		auto lower_row = std::lower_bound(intermediate.begin(), intermediate.end(), Tuple{current_row * CROSSBAR_ROWS, 0, 0}, [] (auto a, auto b) {
+			return a.i < b.i;
+		});
+
+		auto upper_row = std::upper_bound(intermediate.begin(), intermediate.end(), Tuple{(current_row + 1) * CROSSBAR_ROWS - 1, 0, 0}, [] (auto a, auto b) {
 			return a.i < b.i;
 		});
 
@@ -72,7 +102,16 @@ struct GraphOrdering {
 			next_row++;
 		}
 
-		return std::vector<Tuple>(lower_row, upper_row);
+		std::vector<Tuple> result(lower_row, upper_row);
+
+		// Sort the edges by increasing row.
+		std::sort(result.begin(), result.end(), [] (auto a, auto b) {
+			if (a.i == b.i)
+				return a.j < b.j;
+			return a.i < b.i;
+		});
+
+		return result;
 	}
 
 	bool has_next_subgraph() const {
@@ -102,8 +141,9 @@ struct GraphOrdering {
 	size_t get_dimensions() const {
 		return io_result.dimensions;
 	}
-private:
+
 	IOResult io_result;
+private:
 	size_t current_row;
 	size_t current_column;
 	size_t next_row;
@@ -118,8 +158,8 @@ static IOResult read_graph(const std::string &path) {
 	FILE *fp = fopen(path.c_str(), "r");
 	IOResult result{};
 
-	char line[128];
-	while (fgets(line, 128, fp)) {
+	char line[256];
+	while (fgets(line, 256, fp)) {
 		if (!line[0] || line[0] == '%' || line[0] == '#')
 			continue;
 
@@ -149,14 +189,22 @@ static IOResult read_graph(const std::string &path) {
 // crossbar dimensions. The GraphR paper allows for this, but we don't
 // implemented that yet.
 static void expand_to_crossbar(const std::vector<Tuple> &tuples, size_t row_offset, size_t col_offset) {
+	size_t row = 0;
+	std::array<Pair,  CROSSBAR_COLS> vals;
 	for (auto &tuple : tuples) {
-		crossbar[(tuple.i - row_offset) * CROSSBAR_COLS + (tuple.j - col_offset)] = tuple.weight;
+		if ((tuple.i - row_offset) != row) {
+			crossbar.writeRow(row, 0, CROSSBAR_COLS, vals);
+			row = tuple.i - row_offset;
+			vals.fill(Pair{});
+		}
+		vals[tuple.j - col_offset] = Pair{tuple.weight, tuple.j - col_offset};
 	}
+
+	crossbar.writeRow(row, 0, CROSSBAR_COLS, vals);
 }
 
 static void reset_crossbar() {
-	for (auto &val : crossbar)
-		val = std::numeric_limits<int>::max();
+	crossbar.clear();
 }
 
 // This function runs the actual SSSP algorithm, taking as parameter the start node,
@@ -190,19 +238,22 @@ static void run_algorithm(std::vector<int> &d, size_t start_node, GraphOrdering 
 				}
 
 				is_active = true;
-				for (size_t j = 0; j < CROSSBAR_COLS; j++) {
+				auto array = crossbar.readWithInput(i, 0, CROSSBAR_COLS, d[real_row]);
+				int j = 0;
+				for (auto pair : array) {
 					stats.read_ops++;
 					auto real_col = j + graph.get_col_offset();
-					auto sum = crossbar[i * CROSSBAR_COLS + j] + d[real_row];
 					stats.additions++;
-					if (sum < 0)
-						sum = std::numeric_limits<int>::max();
+					if (pair.weight < 0)
+						pair.weight = std::numeric_limits<int>::max();
+
 					auto old_d = d[real_col];
-					d[real_col] = std::min(old_d, sum);
+					d[real_col] = std::min(old_d, pair.weight);
 					stats.mins++;
 					if (d[real_col] != old_d) {
 						changed_nodes[real_col] = true;
 					}
+					j++;
 				}
 
 			}
@@ -218,11 +269,10 @@ int main(int argc, char **argv) {
 	stats = Statistics{};
 	auto io_result = read_graph(argv[1]);
 	std::cout << "dimensions: " << io_result.dimensions << std::endl;
-	crossbar.resize(CROSSBAR_ROWS * CROSSBAR_COLS, std::numeric_limits<int>::max());
 
 	GraphOrdering ordering(io_result);
-	std::vector<int> d(((io_result.dimensions + CROSSBAR_COLS - 1)/CROSSBAR_COLS)*CROSSBAR_COLS, std::numeric_limits<int>::max());
-	run_algorithm(d, 0, ordering);
+	std::vector<int> d(round_up(io_result.dimensions, CROSSBAR_COLS), std::numeric_limits<int>::max());
+	run_algorithm(d, 5, ordering);
 	for (auto d_val : d)
 		std::cout << "d_val: " << d_val << std::endl;
 

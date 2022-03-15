@@ -11,10 +11,10 @@
 template <typename T, size_t Rows, size_t Cols, size_t InputResolution, size_t ColsPerAdc>
 class Crossbar {
 	struct Stats {
-		uint64_t adc_activations;
-		uint64_t row_reads;
-		uint64_t row_writes;
-		uint64_t inputs;
+		uint64_t adc_activations = 0;
+		uint64_t row_reads = 0;
+		uint64_t row_writes = 0;
+		uint64_t inputs = 0;
 	};
 
 	static constexpr unsigned int DatatypeSize = sizeof(T);
@@ -43,8 +43,10 @@ public:
 		logOperation("read", stats);
 
 		std::vector<ValueType> array(num);
-		std::copy(crossbar.begin() + row * Cols + offset, crossbar.begin() + (row) * Cols + offset + num, array.begin());
-		std::transform(array.begin(), array.end(), array.begin(), [input] (auto a) { return a + input; });
+		std::copy(crossbar.begin() + (row * Cols) + offset, crossbar.begin() + (row * Cols) + offset + num, array.begin());
+		std::transform(array.begin(), array.end(), array.begin(), [input] (auto a) {
+				return a + input;
+		});
 		return array;
 	}
 
