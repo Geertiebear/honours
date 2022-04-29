@@ -67,7 +67,7 @@ public:
 private:
 
 	inline void logOperation(const std::string &operationName, const Stats &stats) {
-		log_file << operationName << ": " << stats.adc_activations << "," << stats.row_reads
+		log_file << operationName << " " << stats.adc_activations << "," << stats.row_reads
 			<< "," << stats.row_writes << "," << stats.inputs << "\n";
 	}
 

@@ -3,3 +3,4 @@ cpp/*
 !*.cpp
 !*.hpp
 !.gitignore
+!*.py
