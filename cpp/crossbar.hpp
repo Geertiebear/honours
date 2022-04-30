@@ -29,7 +29,7 @@ public:
 	std::array<ValueType, Cols> readRow(size_t row, size_t offset, size_t num) {
 		Stats stats;
 		// We need to do DatatypeSize read operations;
-		stats.row_reads += DatatypeSize;
+		stats.row_reads += 1;
 		stats.adc_activations = DatatypeSize * ((offset % ColsPerAdc) + (num * ColsPerAdc) + (num % ColsPerAdc));
 		logOperation("read", stats);
 		return std::array<ValueType, Cols>(crossbar.begin() + row * Cols, crossbar.begin() + (row + 1) * Cols);
@@ -37,7 +37,7 @@ public:
 
 	std::vector<ValueType> readWithInput(size_t row, size_t offset, size_t num, int input) {
 		Stats stats;
-		stats.row_reads += DatatypeSize;
+		stats.row_reads += 1;
 		stats.adc_activations = DatatypeSize * ((offset % ColsPerAdc) + (num * ColsPerAdc) + (num % ColsPerAdc));
 		stats.inputs = DatatypeSize;
 		logOperation("read", stats);
@@ -53,8 +53,7 @@ public:
 	void writeRow(size_t row, size_t offset, size_t num, std::array<ValueType, Cols> vals) {
 		Stats stats;
 		assert(row < Rows);
-		// We need to do DatatypeSize write operations.
-		stats.row_writes += DatatypeSize;
+		stats.row_writes += 1;
 		std::copy(vals.begin(), vals.end(), crossbar.begin() + row * Cols);
 		logOperation("write", stats);
 	}

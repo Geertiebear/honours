@@ -3,7 +3,7 @@ from parse import *
 
 read_time = 10
 write_time = 100
-adc_latency = 0.6
+adc_latency = 1
 
 total_time = 0
 
@@ -21,7 +21,7 @@ with open(file, "r") as results:
             total_time += (row_reads * read_time + adc_acts * adc_latency) * inputs
         elif command == "write":
             [adc_acts, row_reads, row_writes, inputs] = parse(" {:d},{:d},{:d},{:d}\n", parsed[1])
-            total_time += (row_writes * write_time + adc_acts * adc_latency) * inputs
+            total_time += (row_writes * write_time + adc_acts * adc_latency)
         else:
             print("Unknown command " + command)
 
