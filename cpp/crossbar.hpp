@@ -26,13 +26,18 @@ public:
 		log_file << "init: " << Cols << "," << Rows << "\n";
 	}
 
-	std::array<ValueType, Cols> readRow(size_t row, size_t offset, size_t num) {
+	Crossbar() : crossbar(Cols * Rows) {}
+
+	std::vector<ValueType> readRow(size_t row, size_t offset, size_t num) {
 		Stats stats;
 		// We need to do DatatypeSize read operations;
 		stats.row_reads += 1;
 		stats.adc_activations = DatatypeSize * ((offset % ColsPerAdc) + (num * ColsPerAdc) + (num % ColsPerAdc));
 		logOperation("read", stats);
-		return std::array<ValueType, Cols>(crossbar.begin() + row * Cols, crossbar.begin() + (row + 1) * Cols);
+
+		std::vector<ValueType> array(num);
+		std::copy(crossbar.begin() + (row * Cols) + offset, crossbar.begin() + (row * Cols) + offset + num, array.begin());
+		return array;
 	}
 
 	std::vector<ValueType> readWithInput(size_t row, size_t offset, size_t num, int input) {
@@ -62,6 +67,14 @@ public:
 		log_file << "clear" << std::endl;
 		for (auto &a : crossbar)
 			a = ValueType{};
+	}
+
+	void set_logfile(const std::string &filename) {
+		log_file = std::ofstream(filename);
+	}
+
+	void init() {
+		log_file << "init: " << Cols << "," << Rows << "\n";
 	}
 private:
 
