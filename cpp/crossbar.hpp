@@ -21,9 +21,9 @@ class Crossbar {
 	using ValueType = T;
 public:
 	Crossbar(const std::string &log_name)
-	: log_file(log_name), crossbar(Cols * Rows)
+	: log_file(new std::ofstream(log_name)), crossbar(Cols * Rows)
 	{
-		log_file << "init: " << Cols << "," << Rows << "\n";
+		*log_file << "init: " << Cols << "," << Rows << "\n";
 	}
 
 	Crossbar() : crossbar(Cols * Rows) {}
@@ -64,26 +64,26 @@ public:
 	}
 
 	void clear() {
-		log_file << "clear" << std::endl;
+		*log_file << "clear" << std::endl;
 		for (auto &a : crossbar)
 			a = ValueType{};
 	}
 
-	void set_logfile(const std::string &filename) {
-		log_file = std::ofstream(filename);
+	void set_logfile(std::ofstream *stream) {
+		log_file = stream;
 	}
 
 	void init() {
-		log_file << "init: " << Cols << "," << Rows << "\n";
+		*log_file << "init: " << Cols << "," << Rows << "\n";
 	}
 private:
 
 	inline void logOperation(const std::string &operationName, const Stats &stats) {
-		log_file << operationName << " " << stats.adc_activations << "," << stats.row_reads
+		*log_file << operationName << " " << stats.adc_activations << "," << stats.row_reads
 			<< "," << stats.row_writes << "," << stats.inputs << "\n";
 	}
 
-	std::ofstream log_file;
+	std::ofstream *log_file;
 	std::vector<ValueType> crossbar;
 };
 

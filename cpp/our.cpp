@@ -292,9 +292,10 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 int main(int argc, char **argv) {
 	stats = Statistics{};
 
-	crossbar.set_logfile("ours.log");
+	std::ofstream log("ours.log");
+	crossbar.set_logfile(&log);
 	crossbar.init();
-	offsets.set_logfile("ours.log");
+	offsets.set_logfile(&log);
 
 	auto io_result = read_graph(argv[1]);
 	std::cout << "dimensions: " << io_result.dimensions << std::endl;
