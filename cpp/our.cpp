@@ -187,7 +187,6 @@ static IOResult read_graph(const std::string &path) {
 			return a.j < b.j;
 		return a.i < b.i;
 	});
-	std::cout << "result num_tuples: " << result.tuples.size() << std::endl;
 
 	fclose(fp);
 	return result;
