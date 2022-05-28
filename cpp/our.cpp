@@ -204,17 +204,22 @@ static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tu
 		if (degree > CROSSBAR_COLS)
 			std::cout << "too large degree: " << degree << std::endl;
 		assert(degree <= CROSSBAR_COLS);
-		if (degree > CROSSBAR_COLS - column) {
-			crossbar.writeRow(row, 0, CROSSBAR_COLS, vals);
-			row++;
-			column = 0;
-			vals.fill(Pair{});
+
+		auto offset = row * CROSSBAR_COLS + column;
+		if (offset_array[tuple.i - row_offset].start == std::numeric_limits<int>::max()) {
+			if (degree > CROSSBAR_COLS - column) {
+				crossbar.writeRow(row, 0, CROSSBAR_COLS, vals);
+				row++;
+				column = 0;
+				vals.fill(Pair{});
+			}
+			offset = row * CROSSBAR_COLS + column;
+			offset_array[tuple.i - row_offset] = Offset{offset, offset + degree};
+		} else {
+			assert(offset_array[tuple.i - row_offset].stop >= offset);
 		}
 		assert(tuple.i - row_offset < offset_array.size());
 
-		auto offset = row * CROSSBAR_COLS + column;
-		if (offset_array[tuple.i - row_offset].start == std::numeric_limits<int>::max())
-			offset_array[tuple.i - row_offset] = Offset{offset, offset + degree};
 		vals[column] = Pair{tuple.weight, tuple.j};
 		column++;
 	}
@@ -255,11 +260,14 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 
 			for (size_t i = 0; i < CROSSBAR_COLS; i++) {
 				auto real_row = i + graph.get_row_offset();
-				if (!active_nodes[i])
+				if (!active_nodes[real_row])
 					continue;
 
 				is_active = true;
 				auto offset = offsets.readRow(0, i, 1)[0];
+				if (offset.start == std::numeric_limits<int>::max())
+					continue;
+
 				auto num_edges = offset.stop - offset.start;
 				auto offset_i = offset.start / CROSSBAR_COLS;
 				auto offset_j = offset.start % CROSSBAR_COLS;
@@ -294,19 +302,14 @@ int main(int argc, char **argv) {
 	std::ofstream log("ours.log");
 	crossbar.set_logfile(&log);
 	crossbar.init();
-	offsets.set_logfile(&log);
+	std::ofstream other_log("idc.log");
+	offsets.set_logfile(&other_log);
 
 	auto io_result = read_graph(argv[1]);
 	std::cout << "dimensions: " << io_result.dimensions << std::endl;
 	GraphOrdering ordering(io_result);
 	auto d = run_algorithm(5, ordering);
 	for (auto val : d)
-		std::cout << "d val: " << val << std::endl;
-
-	std::cout << "Statistics:" << std::endl;
-	std::cout << "writes: " << stats.write_ops << "\n"
-		<< "reads: " << stats.read_ops << "\n"
-		<< "additions: " << stats.additions << "\n"
-		<< "mins: " << stats.mins << "\n";
+		std::cout << "d_val: " << val << std::endl;
 	return 0;
 }

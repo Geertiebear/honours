@@ -276,10 +276,5 @@ int main(int argc, char **argv) {
 	for (auto d_val : d)
 		std::cout << "d_val: " << d_val << std::endl;
 
-	std::cout << "Statistics:" << std::endl;
-	std::cout << "writes: " << stats.write_ops << "\n"
-		<< "reads: " << stats.read_ops << "\n"
-		<< "additions: " << stats.additions << "\n"
-		<< "mins: " << stats.mins << "\n";
 	return 0;
 }
