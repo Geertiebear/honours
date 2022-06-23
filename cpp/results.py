@@ -41,7 +41,11 @@ experiment_results = {
         "graphr-time": [],
         "graphr-energy": [],
         "our-time": [],
-        "our-energy": []}
+        "our-energy": [],
+        "our-offsets-time" : [],
+        "our-offsets-energy": [],
+        "our-total-time": [],
+        "our-total-energy": []}
 
 for experiment in experiments:
     [graphr_time, graphr_energy] = values_from_file(experiment + "-graphr.log")
@@ -52,6 +56,13 @@ for experiment in experiments:
     experiment_results["our-time"].append(our_time)
     experiment_results["our-energy"].append(our_energy)
 
+    [our_offset_time, our_offset_energy] = values_from_file(experiment + "-ours-offsets.log")
+    experiment_results["our-offsets-time"].append(our_offset_time)
+    experiment_results["our-offsets-energy"].append(our_offset_energy)
+
+    experiment_results["our-total-time"].append(our_offset_time + our_time)
+    experiment_results["our-total-energy"].append(our_offset_energy + our_energy)
+
 
 x = np.arange(len(experiments))
 width = 0.35
@@ -59,7 +70,7 @@ width = 0.35
 fig, ax = plt.subplots()
 rects1 = ax.bar(x-width/2, experiment_results["graphr-time"], width,
         label='GraphR')
-rects2 = ax.bar(x+width/2, experiment_results["our-time"], width,
+rects2 = ax.bar(x+width/2, experiment_results["our-total-time"], width,
         label='Our')
 ax.legend()
 ax.set_yscale('log')
@@ -73,7 +84,7 @@ plt.savefig('time.png')
 fig, ax = plt.subplots()
 rects1 = ax.bar(x-width/2, experiment_results["graphr-energy"], width,
         label='GraphR')
-rects2 = ax.bar(x+width/2, experiment_results["our-energy"], width,
+rects2 = ax.bar(x+width/2, experiment_results["our-total-energy"], width,
         label='Our')
 
 ax.legend()

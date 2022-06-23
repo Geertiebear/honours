@@ -43,8 +43,8 @@ struct Offset {
 std::vector<size_t> edge_counts;
 constexpr unsigned int CROSSBAR_ROWS = 2048;
 constexpr unsigned int CROSSBAR_COLS = 2048;
-Crossbar<Pair, CROSSBAR_ROWS, CROSSBAR_COLS, 16, 4> crossbar;
-Crossbar<Offset, CROSSBAR_ROWS, CROSSBAR_COLS, 16, 4> offsets;
+Crossbar<Pair> crossbar;
+Crossbar<Offset> offsets;
 
 struct Tuple {
 	Tuple(size_t i, size_t j ,int weight)
@@ -197,8 +197,8 @@ static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tu
 		throw std::runtime_error("graph too large to fit into crossbar!");
 
 	size_t row = 0, column = 0;
-	std::array<Pair, CROSSBAR_COLS> vals;
-	std::array<Offset, CROSSBAR_COLS> offset_array;
+	std::vector<Pair> vals(CROSSBAR_COLS);
+	std::vector<Offset> offset_array(CROSSBAR_COLS);
 	for (auto &tuple : tuples) {
 		auto degree = io_result.degrees[tuple.i];
 		if (degree > CROSSBAR_COLS)
@@ -211,7 +211,8 @@ static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tu
 				crossbar.writeRow(row, 0, CROSSBAR_COLS, vals);
 				row++;
 				column = 0;
-				vals.fill(Pair{});
+				vals.clear();
+				vals.resize(CROSSBAR_COLS);
 			}
 			offset = row * CROSSBAR_COLS + column;
 			offset_array[tuple.i - row_offset] = Offset{offset, offset + degree};
@@ -299,13 +300,28 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 int main(int argc, char **argv) {
 	stats = Statistics{};
 
-	std::ofstream log("ours.log");
-	crossbar.set_logfile(&log);
-	crossbar.init();
-	std::ofstream other_log("idc.log");
-	offsets.set_logfile(&other_log);
+	CrossbarOptions opts;
+	opts.cols = CROSSBAR_COLS;
+	opts.rows = CROSSBAR_ROWS;
+	opts.input_resolution = 16;
+	opts.cols_per_adc = 4;
+	opts.adc = true;
+	std::string graph_path(argv[1]);
+	std::string graph = [&graph_path] {
+		auto tmp = graph_path.substr(graph_path.find_last_of("/\\") + 1);
+		return tmp.substr(0, tmp.find_first_of("."));
+	}();
 
-	auto io_result = read_graph(argv[1]);
+	std::ofstream log(graph + "-ours.log");
+	crossbar.set_logfile(&log);
+	crossbar.set_options(opts);
+	crossbar.init();
+	std::ofstream other_log(graph + "-ours-offsets.log");
+	offsets.set_logfile(&other_log);
+	offsets.set_options(opts);
+	offsets.init();
+
+	auto io_result = read_graph(graph_path);
 	std::cout << "dimensions: " << io_result.dimensions << std::endl;
 	GraphOrdering ordering(io_result);
 	auto d = run_algorithm(5, ordering);

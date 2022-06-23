@@ -52,7 +52,7 @@ constexpr auto round_up(const auto a, const auto b) {
 
 constexpr unsigned int CROSSBAR_ROWS = 2048;
 constexpr unsigned int CROSSBAR_COLS = 2048;
-Crossbar<Pair, CROSSBAR_ROWS, CROSSBAR_COLS, 16, 4> crossbar("graphr.log");
+Crossbar<Pair> crossbar;
 
 
 struct GraphOrdering {
@@ -190,12 +190,13 @@ static IOResult read_graph(const std::string &path) {
 // implemented that yet.
 static void expand_to_crossbar(const std::vector<Tuple> &tuples, size_t row_offset, size_t col_offset) {
 	size_t row = 0;
-	std::array<Pair,  CROSSBAR_COLS> vals;
+	std::vector<Pair> vals(CROSSBAR_COLS);
 	for (auto &tuple : tuples) {
 		if ((tuple.i - row_offset) != row) {
 			crossbar.writeRow(row, 0, CROSSBAR_COLS, vals);
 			row = tuple.i - row_offset;
-			vals.fill(Pair{});
+			vals.clear();
+			vals.resize(CROSSBAR_COLS);
 		}
 		vals[tuple.j - col_offset] = Pair{tuple.weight, tuple.j - col_offset};
 	}
@@ -266,8 +267,26 @@ static void run_algorithm(std::vector<int> &d, size_t start_node, GraphOrdering 
 
 
 int main(int argc, char **argv) {
+	CrossbarOptions opts;
+	opts.rows = CROSSBAR_ROWS;
+	opts.cols = CROSSBAR_COLS;
+	opts.input_resolution = 16;
+	opts.cols_per_adc = 4;
+	opts.adc = true;
+	
+	std::string graph_path(argv[1]);
+	std::string graph = [&graph_path] {
+		auto tmp = graph_path.substr(graph_path.find_last_of("/\\") + 1);
+		return tmp.substr(0, tmp.find_first_of("."));
+	}();
+
+	std::ofstream log(graph + "-graphr.log");
+	crossbar.set_logfile(&log);
+	crossbar.set_options(opts);
+	crossbar.init();
+
 	stats = Statistics{};
-	auto io_result = read_graph(argv[1]);
+	auto io_result = read_graph(graph_path);
 	std::cout << "dimensions: " << io_result.dimensions << std::endl;
 
 	GraphOrdering ordering(io_result);
