@@ -53,6 +53,7 @@ constexpr auto round_up(const auto a, const auto b) {
 constexpr unsigned int CROSSBAR_ROWS = 2048;
 constexpr unsigned int CROSSBAR_COLS = 2048;
 Crossbar<Pair> crossbar;
+std::vector<double> efficiences;
 
 
 struct GraphOrdering {
@@ -202,6 +203,9 @@ static void expand_to_crossbar(const std::vector<Tuple> &tuples, size_t row_offs
 	}
 
 	crossbar.writeRow(row, 0, CROSSBAR_COLS, vals);
+	efficiences.push_back(crossbar.space_efficiency([] (Pair &val) {
+		return val.weight != std::numeric_limits<int>::max();
+	}));
 }
 
 static void reset_crossbar() {
@@ -287,13 +291,20 @@ int main(int argc, char **argv) {
 
 	stats = Statistics{};
 	auto io_result = read_graph(graph_path);
-	std::cout << "dimensions: " << io_result.dimensions << std::endl;
+	std::cout << "dimensions: " << io_result.dimensions << "\n";
 
 	GraphOrdering ordering(io_result);
 	std::vector<int> d(round_up(io_result.dimensions, CROSSBAR_COLS), std::numeric_limits<int>::max());
 	run_algorithm(d, 5, ordering);
 	for (auto d_val : d)
 		std::cout << "d_val: " << d_val << std::endl;
+
+	double efficiency = 0;
+	for (auto val : efficiences)
+		efficiency += val;
+	efficiency /= efficiences.size();
+
+	log << "efficiency " << efficiency << std::endl;
 
 	return 0;
 }

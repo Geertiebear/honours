@@ -88,6 +88,16 @@ public:
 	void init() {
 		*log_file << "init: " << opts.cols << "," << opts.rows << "\n";
 	}
+
+	template <typename F>
+	double space_efficiency(F func) {
+		size_t num_present = 0;
+		for (auto val : crossbar)
+			if (func(val))
+				num_present++;
+
+		return static_cast<double>(num_present) / static_cast<double>(crossbar.size());
+	}
 private:
 
 	inline void logOperation(const std::string &operationName, const Stats &stats) {

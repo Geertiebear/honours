@@ -17,6 +17,7 @@ def values_from_file(filename):
         data = results.readlines()
         total_time = 0
         total_energy = 0
+        efficiency = 0.0
         [row, col] = parse("init: {:d},{:d}\n", data[0]) 
         for i in range(1, len(data)):
             parsed = parse("{:l}{}", data[i])
@@ -32,31 +33,37 @@ def values_from_file(filename):
                 [adc_acts, row_reads, row_writes, inputs] = parse(" {:d},{:d},{:d},{:d}\n", parsed[1])
                 total_time += (row_writes * write_time + adc_acts * adc_latency)
                 total_energy += (row_writes * write_energy + adc_acts * adc_energy) * inputs
+            elif command == "efficiency":
+                efficiency = parse(" {:f}\n", parsed[1])[0]
             else:
                 print("Unknown command " + command)
-        return (total_time, total_energy)
+        return (total_time, total_energy, efficiency)
 
 
 experiment_results = {
         "graphr-time": [],
         "graphr-energy": [],
+        "graphr-efficiency": [],
         "our-time": [],
         "our-energy": [],
+        "our-efficiency": [],
         "our-offsets-time" : [],
         "our-offsets-energy": [],
         "our-total-time": [],
         "our-total-energy": []}
 
 for experiment in experiments:
-    [graphr_time, graphr_energy] = values_from_file(experiment + "-graphr.log")
+    [graphr_time, graphr_energy, graphr_efficiency] = values_from_file(experiment + "-graphr.log")
     experiment_results["graphr-time"].append(graphr_time)
     experiment_results["graphr-energy"].append(graphr_energy)
+    experiment_results["graphr-efficiency"].append(graphr_efficiency)
 
-    [our_time, our_energy] = values_from_file(experiment + "-ours.log")
+    [our_time, our_energy, our_efficiency] = values_from_file(experiment + "-ours.log")
     experiment_results["our-time"].append(our_time)
     experiment_results["our-energy"].append(our_energy)
+    experiment_results["our-efficiency"].append(our_efficiency)
 
-    [our_offset_time, our_offset_energy] = values_from_file(experiment + "-ours-offsets.log")
+    [our_offset_time, our_offset_energy, _] = values_from_file(experiment + "-ours-offsets.log")
     experiment_results["our-offsets-time"].append(our_offset_time)
     experiment_results["our-offsets-energy"].append(our_offset_energy)
 
@@ -95,3 +102,17 @@ ax.bar_label(rects2, padding=3)
 
 fig.tight_layout()
 plt.savefig('energy.png')
+
+fig, ax = plt.subplots()
+rects1 = ax.bar(x-width/2, experiment_results["graphr-efficiency"], width,
+        label='GraphR')
+rects2 = ax.bar(x+width/2, experiment_results["our-efficiency"], width,
+        label='Our')
+
+ax.legend()
+ax.set_xticks(x, experiments)
+ax.bar_label(rects1, padding=3)
+ax.bar_label(rects2, padding=3)
+
+fig.tight_layout()
+plt.savefig('efficiency.png')

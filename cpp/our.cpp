@@ -45,6 +45,7 @@ constexpr unsigned int CROSSBAR_ROWS = 2048;
 constexpr unsigned int CROSSBAR_COLS = 2048;
 Crossbar<Pair> crossbar;
 Crossbar<Offset> offsets;
+std::vector<double> efficiences;
 
 struct Tuple {
 	Tuple(size_t i, size_t j ,int weight)
@@ -226,6 +227,10 @@ static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tu
 	}
 	crossbar.writeRow(row, 0, CROSSBAR_COLS, vals);
 	offsets.writeRow(0, 0, CROSSBAR_COLS, offset_array);
+
+	efficiences.push_back(crossbar.space_efficiency([] (Pair &val) {
+		return val.weight != std::numeric_limits<int>::max();
+	}));
 }
 
 static void reset_crossbar() {
@@ -327,5 +332,12 @@ int main(int argc, char **argv) {
 	auto d = run_algorithm(5, ordering);
 	for (auto val : d)
 		std::cout << "d_val: " << val << std::endl;
+
+	double efficiency = 0;
+	for (auto val : efficiences)
+		efficiency += val;
+	efficiency /= efficiences.size();
+
+	log << "efficiency " << efficiency << std::endl;
 	return 0;
 }
