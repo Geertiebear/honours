@@ -29,7 +29,7 @@ public:
 	: log_file(new std::ofstream(log_name)), crossbar(opts.rows * opts.cols),
 	opts(opts)
 	{
-		*log_file << "init: " << opts.cols << "," << opts.rows << "\n";
+		init();
 	}
 
 	Crossbar() {}
@@ -86,7 +86,8 @@ public:
 	}
 
 	void init() {
-		*log_file << "init: " << opts.cols << "," << opts.rows << "\n";
+		std::string sense_type(opts.adc ? "adc" : "sa");
+		*log_file << "init: " << opts.cols << "," << opts.rows << "," << sense_type << "\n";
 	}
 
 	template <typename F>

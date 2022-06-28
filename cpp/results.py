@@ -9,6 +9,8 @@ adc_latency = 1 * 10**-9
 read_energy = 40 * 10**-15
 write_energy = 20 * 10**-12
 adc_energy = 2 * 10**-12
+sa_latency = 1 * 10**-9
+sa_energy = 0.01 * 10**-12
 
 experiments = ["wiki-Vote"]
 
@@ -18,7 +20,20 @@ def values_from_file(filename):
         total_time = 0
         total_energy = 0
         efficiency = 0.0
-        [row, col] = parse("init: {:d},{:d}\n", data[0]) 
+        [row, col, sense_type] = parse("init: {:d},{:d},{:l}\n", data[0]) 
+
+        energy = 0
+        latency = 0
+
+        if sense_type == "adc":
+            energy = adc_energy
+            latency = adc_latency
+        elif sense_type == "sa":
+            energy = sa_energy
+            latency = sa_latency
+        else:
+            print("Unknown sense_type: " + sense_type)
+
         for i in range(1, len(data)):
             parsed = parse("{:l}{}", data[i])
             command = parsed[0].strip('\n')
@@ -27,12 +42,12 @@ def values_from_file(filename):
                 total_energy += row*write_energy
             elif command == "read":
                 [adc_acts, row_reads, row_writes, inputs] = parse(" {:d},{:d},{:d},{:d}\n", parsed[1])
-                total_time += (row_reads * read_time + adc_acts * adc_latency) * inputs
-                total_energy += (row_reads * read_energy + adc_acts * adc_energy) * inputs
+                total_time += (row_reads * read_time + adc_acts * latency) * inputs
+                total_energy += (row_reads * read_energy + adc_acts * energy) * inputs
             elif command == "write":
                 [adc_acts, row_reads, row_writes, inputs] = parse(" {:d},{:d},{:d},{:d}\n", parsed[1])
-                total_time += (row_writes * write_time + adc_acts * adc_latency)
-                total_energy += (row_writes * write_energy + adc_acts * adc_energy) * inputs
+                total_time += (row_writes * write_time + adc_acts * latency)
+                total_energy += (row_writes * write_energy + adc_acts * energy) * inputs
             elif command == "efficiency":
                 efficiency = parse(" {:f}\n", parsed[1])[0]
             else:

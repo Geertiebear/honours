@@ -310,7 +310,7 @@ int main(int argc, char **argv) {
 	opts.rows = CROSSBAR_ROWS;
 	opts.input_resolution = 16;
 	opts.cols_per_adc = 4;
-	opts.adc = true;
+	opts.adc = false;
 	std::string graph_path(argv[1]);
 	std::string graph = [&graph_path] {
 		auto tmp = graph_path.substr(graph_path.find_last_of("/\\") + 1);
