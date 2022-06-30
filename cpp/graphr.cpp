@@ -50,6 +50,7 @@ constexpr auto round_up(const auto a, const auto b) {
 	return ((a + b - 1) / b)*b;
 }
 
+constexpr unsigned int ITERATIONS = 10;
 constexpr unsigned int CROSSBAR_ROWS = 2048;
 constexpr unsigned int CROSSBAR_COLS = 2048;
 Crossbar<Pair> crossbar;
@@ -224,10 +225,15 @@ static void run_algorithm(std::vector<int> &d, size_t start_node, GraphOrdering 
 	active_nodes[start_node] = true;
 	d[start_node] = 0;
 
+	unsigned int iterations = 0;
+
 	bool is_active = true;
 	while (is_active) {
 		is_active = false;
 		graph.reset_position();
+		if (iterations == ITERATIONS)
+			break;
+
 		while (graph.has_next_subgraph()) {
 			reset_crossbar();
 
@@ -266,6 +272,8 @@ static void run_algorithm(std::vector<int> &d, size_t start_node, GraphOrdering 
 		active_nodes = changed_nodes;
 		changed_nodes.clear();
 		changed_nodes.resize(((graph.get_dimensions() + CROSSBAR_COLS - 1)/CROSSBAR_COLS)*CROSSBAR_COLS);
+		std::cout << "completed one iteration!" << std::endl;
+		iterations++;
 	}
 }
 
@@ -275,7 +283,7 @@ int main(int argc, char **argv) {
 	opts.rows = CROSSBAR_ROWS;
 	opts.cols = CROSSBAR_COLS;
 	opts.input_resolution = 16;
-	opts.cols_per_adc = 4;
+	opts.cols_per_adc = 32;
 	opts.adc = true;
 	
 	std::string graph_path(argv[1]);

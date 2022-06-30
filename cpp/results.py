@@ -1,6 +1,7 @@
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 from parse import *
 
 read_time = 10 * 10**-9
@@ -12,6 +13,8 @@ adc_energy = 2 * 10**-12
 sa_latency = 1 * 10**-9
 sa_energy = 0.01 * 10**-12
 
+#experiments = ["wiki-Vote", "amazon0302", "com-lj", "web-Google",
+ #       "soc-Slashdot0902.txt"]
 experiments = ["wiki-Vote"]
 
 def values_from_file(filename):
@@ -65,7 +68,10 @@ experiment_results = {
         "our-offsets-time" : [],
         "our-offsets-energy": [],
         "our-total-time": [],
-        "our-total-energy": []}
+        "our-total-energy": [],
+        "normal-graphr-time": [],
+        "normal-graphr-energy": [],
+        "normal-graphr-efficiency": []}
 
 for experiment in experiments:
     [graphr_time, graphr_energy, graphr_efficiency] = values_from_file(experiment + "-graphr.log")
@@ -82,52 +88,75 @@ for experiment in experiments:
     experiment_results["our-offsets-time"].append(our_offset_time)
     experiment_results["our-offsets-energy"].append(our_offset_energy)
 
+    our_total_energy = our_offset_energy + our_energy
+    our_total_time = our_offset_time + our_time
+
     experiment_results["our-total-time"].append(our_offset_time + our_time)
     experiment_results["our-total-energy"].append(our_offset_energy + our_energy)
 
+    experiment_results["normal-graphr-time"].append(graphr_time / our_total_time)
+    experiment_results["normal-graphr-energy"].append(graphr_energy / our_total_energy)
+    experiment_results["normal-graphr-efficiency"].append(graphr_efficiency / our_efficiency)
 
+
+colors = sns.color_palette("pastel", as_cmap=True)
+graph_colors = {
+    'our': colors[0],
+    'graphr': colors[1]
+}
+
+width = 0.25
 x = np.arange(len(experiments))
-width = 0.35
+normals = [1] * len(experiments)
 
 fig, ax = plt.subplots()
-rects1 = ax.bar(x-width/2, experiment_results["graphr-time"], width,
-        label='GraphR')
-rects2 = ax.bar(x+width/2, experiment_results["our-total-time"], width,
-        label='Our')
+rects1 = ax.bar(x-width/2, experiment_results["normal-graphr-time"], width,
+        label='GraphR', color=graph_colors['graphr'])
+rects2 = ax.bar(x+width/2, normals, width,
+        label='Our', color=graph_colors['our'])
 ax.legend()
 ax.set_yscale('log')
 ax.set_xticks(x, experiments)
 ax.bar_label(rects1, padding=3)
 ax.bar_label(rects2, padding=3)
+ax.set_xlabel("Dataset")
+ax.set_ylabel("Time")
+ax.set_title("Normalized time difference per dataset")
 
 fig.tight_layout()
 plt.savefig('time.png')
 
 fig, ax = plt.subplots()
-rects1 = ax.bar(x-width/2, experiment_results["graphr-energy"], width,
-        label='GraphR')
-rects2 = ax.bar(x+width/2, experiment_results["our-total-energy"], width,
-        label='Our')
+rects1 = ax.bar(x-width/2, experiment_results["normal-graphr-energy"], width,
+        label='GraphR', color=graph_colors['graphr'])
+rects2 = ax.bar(x+width/2, normals, width,
+        label='Our', color=graph_colors['our'])
 
 ax.legend()
 ax.set_yscale('log')
 ax.set_xticks(x, experiments)
 ax.bar_label(rects1, padding=3)
 ax.bar_label(rects2, padding=3)
+ax.set_xlabel("Dataset")
+ax.set_ylabel("Energy")
+ax.set_title("Normalized energy difference per dataset")
 
 fig.tight_layout()
 plt.savefig('energy.png')
 
 fig, ax = plt.subplots()
-rects1 = ax.bar(x-width/2, experiment_results["graphr-efficiency"], width,
-        label='GraphR')
-rects2 = ax.bar(x+width/2, experiment_results["our-efficiency"], width,
-        label='Our')
+rects1 = ax.bar(x-width/2, experiment_results["normal-graphr-efficiency"], width,
+        label='GraphR', color=graph_colors['graphr'])
+rects2 = ax.bar(x+width/2, normals, width,
+        label='Our', color=graph_colors['our'])
 
 ax.legend()
 ax.set_xticks(x, experiments)
 ax.bar_label(rects1, padding=3)
 ax.bar_label(rects2, padding=3)
+ax.set_xlabel("Dataset")
+ax.set_ylabel("Efficiency")
+ax.set_title("Normalized efficiency difference per dataset")
 
 fig.tight_layout()
 plt.savefig('efficiency.png')

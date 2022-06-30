@@ -41,6 +41,7 @@ struct Offset {
 };
 
 std::vector<size_t> edge_counts;
+constexpr unsigned int ITERATIONS = 10;
 constexpr unsigned int CROSSBAR_ROWS = 2048;
 constexpr unsigned int CROSSBAR_COLS = 2048;
 Crossbar<Pair> crossbar;
@@ -250,10 +251,15 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 	active_nodes[start_node] = true;
 	d[start_node] = 0;
 
+	unsigned int iterations = 0;
+
 	bool is_active = true;
 	while (is_active) {
 		is_active = false;
 		graph.reset_position();
+
+		if (iterations == ITERATIONS)
+			break;
 
 		while (graph.has_next_subgraph()) {
 			reset_crossbar();
@@ -296,6 +302,7 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 		active_nodes = changed_nodes;
 		changed_nodes.clear();
 		changed_nodes.resize(round_up(graph.get_dimensions(), CROSSBAR_COLS));
+		iterations++;
 	}
 
 	return d;
