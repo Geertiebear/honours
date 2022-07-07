@@ -103,11 +103,11 @@ struct GraphOrdering {
 			return a.i < b.i;
 		});
 
-		auto lower_row = std::lower_bound(temp.begin(), temp.end(), Tuple{current_row * CROSSBAR_ROWS, current_column * CROSSBAR_COLS, 0}, [] (auto a, auto b) {
+		auto lower_row = std::lower_bound(temp.begin(), temp.end(), Tuple{current_row * CROSSBAR_ROWS, 0, 0}, [] (auto a, auto b) {
 			return a.i < b.i;
 		});
 
-		auto upper_row = std::upper_bound(temp.begin(), temp.end(), Tuple{(current_row + 1) * CROSSBAR_ROWS - 1, (current_column + 1) * CROSSBAR_COLS - 1, 0}, [] (auto a, auto b) {
+		auto upper_row = std::upper_bound(temp.begin(), temp.end(), Tuple{(current_row + 1) * CROSSBAR_ROWS - 1, 0, 0}, [] (auto a, auto b) {
 			return a.i < b.i;
 		});
 
@@ -173,13 +173,13 @@ static IOResult read_graph(const std::string &path) {
 		sscanf(line, "%ld %ld", &row, &col);
 
 		result.tuples.emplace_back(row, col, 1);
-		result.tuples.emplace_back(col, row, 1);
+		//result.tuples.emplace_back(col, row, 1);
 
 		auto max = std::max(row, col);
 
 		result.degrees.resize(std::max(max, result.degrees.size()) + 1);
 		result.degrees[row] += 1;
-		result.degrees[col] += 1;
+		//result.degrees[col] += 1;
 	}
 
 	auto max = std::max_element(result.tuples.begin(), result.tuples.end(), [] (auto a, auto b) {

@@ -32,27 +32,28 @@ struct Statistics {
 
 struct Pair {
 	Pair()
-	: weight(std::numeric_limits<int>::max()), dest(0)
+	: weight(std::numeric_limits<int>::max()),
+	dest(std::numeric_limits<unsigned short>::max())
 	{}
-	Pair(int weight, size_t dest)
+	Pair (int weight, unsigned short dest)
 	: weight(weight), dest(dest)
 	{}
 
-	Pair operator+(int b) {
-		return Pair{weight + b, dest};
+	Pair operator+(const int &add) {
+		return Pair{weight + add, dest};
 	}
 
 	int weight;
-	size_t dest;
+	unsigned short dest;
 };
 
 constexpr auto round_up(const auto a, const auto b) {
 	return ((a + b - 1) / b)*b;
 }
 
-constexpr unsigned int ITERATIONS = 10;
-constexpr unsigned int CROSSBAR_ROWS = 2048;
-constexpr unsigned int CROSSBAR_COLS = 2048;
+constexpr unsigned int ITERATIONS = 2;
+constexpr unsigned int CROSSBAR_ROWS = 256;
+constexpr unsigned int CROSSBAR_COLS = 256;
 Crossbar<Pair> crossbar;
 std::vector<double> efficiences;
 
@@ -62,7 +63,7 @@ struct GraphOrdering {
 	: io_result(std::move(pio_result)), current_row(0), current_column(0), next_row(0),
 	next_column(0) {
 		// Sort the edges by increasing column.
-		std::sort(io_result.tuples.begin(), io_result.tuples.end(), [] (auto a, auto b) {
+		std::sort(this->io_result.tuples.begin(), this->io_result.tuples.end(), [] (auto a, auto b) {
 			if (a.j == b.j)
 				return a.i < b.i;
 			return a.j < b.j;
@@ -169,7 +170,7 @@ static IOResult read_graph(const std::string &path) {
 		sscanf(line, "%ld %ld", &row, &col);
 
 		result.tuples.emplace_back(row, col, 1);
-		result.tuples.emplace_back(col, row, 1);
+		//result.tuples.emplace_back(col, row, 1);
 	}
 
 	auto max = std::max_element(result.tuples.begin(), result.tuples.end(), [] (auto a, auto b) {
