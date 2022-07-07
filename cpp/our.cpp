@@ -5,25 +5,22 @@
 #include <limits>
 #include <stdexcept>
 #include <cassert>
+#include <chrono>
 #include <iostream>
 
 #include "crossbar.hpp"
 
 struct Pair {
 	Pair()
-	: weight(std::numeric_limits<int>::max()), dest(0)
+	: dest(std::numeric_limits<unsigned short>::max())
 	{}
-	Pair(int weight, size_t dest)
-	: weight(weight), dest(dest)
+	Pair(size_t dest)
+	: dest(dest)
 	{}
 
-	Pair operator+(int b) {
-		return Pair{weight + b, dest};
-	}
-
-	int weight;
-	size_t dest;
+	unsigned short dest;
 };
+static_assert(sizeof(Pair) == sizeof(unsigned short));
 
 struct Offset {
 	Offset() : start(std::numeric_limits<int>::max()),
@@ -41,9 +38,9 @@ struct Offset {
 };
 
 std::vector<size_t> edge_counts;
-constexpr unsigned int ITERATIONS = 10;
-constexpr unsigned int CROSSBAR_ROWS = 2048;
-constexpr unsigned int CROSSBAR_COLS = 2048;
+constexpr unsigned int ITERATIONS = 2;
+constexpr unsigned int CROSSBAR_ROWS = 256;
+constexpr unsigned int CROSSBAR_COLS = 256;
 Crossbar<Pair> crossbar;
 Crossbar<Offset> offsets;
 std::vector<double> efficiences;
@@ -78,7 +75,7 @@ struct GraphOrdering {
 	: io_result(std::move(io_result)), current_row(0), current_column(0), next_row(0),
 	next_column(0) {
 		// Sort the edges by increasing column.
-		std::sort(io_result.tuples.begin(), io_result.tuples.end(), [] (auto a, auto b) {
+		std::sort(this->io_result.tuples.begin(), this->io_result.tuples.end(), [] (auto a, auto b) {
 			if (a.j == b.j)
 				return a.i < b.i;
 			return a.j < b.j;
@@ -99,11 +96,18 @@ struct GraphOrdering {
 			return a.j < b.j;
 		});
 
-		auto lower_row = std::lower_bound(lower_column, upper_column, Tuple{current_row * CROSSBAR_ROWS, 0, 0}, [] (auto a, auto b) {
+		std::vector<Tuple> temp(lower_column, upper_column);
+		std::sort(temp.begin(), temp.end(), [] (auto a, auto b) {
+			if (a.i == b.i)
+				return a.j < b.j;
 			return a.i < b.i;
 		});
 
-		auto upper_row = std::upper_bound(lower_column, upper_column, Tuple{(current_row + 1) * CROSSBAR_ROWS - 1, 0, 0}, [] (auto a, auto b) {
+		auto lower_row = std::lower_bound(temp.begin(), temp.end(), Tuple{current_row * CROSSBAR_ROWS, current_column * CROSSBAR_COLS, 0}, [] (auto a, auto b) {
+			return a.i < b.i;
+		});
+
+		auto upper_row = std::upper_bound(temp.begin(), temp.end(), Tuple{(current_row + 1) * CROSSBAR_ROWS - 1, (current_column + 1) * CROSSBAR_COLS - 1, 0}, [] (auto a, auto b) {
 			return a.i < b.i;
 		});
 
@@ -194,15 +198,21 @@ static IOResult read_graph(const std::string &path) {
 	return result;
 }
 
-static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tuples, size_t row_offset) {
+static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tuples, size_t row_offset,
+		size_t col_offset) {
 	if (tuples.size() >= CROSSBAR_ROWS * CROSSBAR_COLS)
 		throw std::runtime_error("graph too large to fit into crossbar!");
 
 	size_t row = 0, column = 0;
 	std::vector<Pair> vals(CROSSBAR_COLS);
 	std::vector<Offset> offset_array(CROSSBAR_COLS);
+
+	std::vector<unsigned int> degrees(CROSSBAR_COLS);
+	for (auto &tuple : tuples)
+		degrees[tuple.i - row_offset]++;
+
 	for (auto &tuple : tuples) {
-		auto degree = io_result.degrees[tuple.i];
+		auto degree = degrees[tuple.i - row_offset];
 		if (degree > CROSSBAR_COLS)
 			std::cout << "too large degree: " << degree << std::endl;
 		assert(degree <= CROSSBAR_COLS);
@@ -223,14 +233,15 @@ static void expand_to_crossbar(IOResult &io_result, const std::vector<Tuple> &tu
 		}
 		assert(tuple.i - row_offset < offset_array.size());
 
-		vals[column] = Pair{tuple.weight, tuple.j};
+		assert(tuple.j - col_offset < CROSSBAR_COLS);
+		vals[column] = Pair{tuple.j - col_offset};
 		column++;
 	}
 	crossbar.writeRow(row, 0, CROSSBAR_COLS, vals);
 	offsets.writeRow(0, 0, CROSSBAR_COLS, offset_array);
 
 	efficiences.push_back(crossbar.space_efficiency([] (Pair &val) {
-		return val.weight != std::numeric_limits<int>::max();
+		return val.dest != std::numeric_limits<unsigned short>::max();
 	}));
 }
 
@@ -262,13 +273,31 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 			break;
 
 		while (graph.has_next_subgraph()) {
+			auto start = std::chrono::system_clock::now();
 			reset_crossbar();
 
+			auto end = std::chrono::system_clock::now();
+			std::chrono::duration<double> duration = end - start;
+			//std::cout << "cleared crossbar! " << duration.count() << std::endl;
+			start = std::chrono::system_clock::now();
+
 			auto tuples = graph.next_subgraph();
+
+			end = std::chrono::system_clock::now();
+			duration = end - start;
+			//std::cout << "got tuples! " << duration.count() << std::endl;
+			start = std::chrono::system_clock::now();
+
 			if (tuples.empty())
 				continue;
-			expand_to_crossbar(graph.io_result, tuples, graph.get_row_offset());
+			expand_to_crossbar(graph.io_result, tuples, graph.get_row_offset(),
+					graph.get_col_offset());
 			stats.write_ops++;
+
+			end = std::chrono::system_clock::now();
+			duration = end - start;
+			//std::cout << "expanded to crossbar! " << duration.count() << std::endl;
+			start = std::chrono::system_clock::now();
 
 			for (size_t i = 0; i < CROSSBAR_COLS; i++) {
 				auto real_row = i + graph.get_row_offset();
@@ -283,10 +312,10 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 				auto num_edges = offset.stop - offset.start;
 				auto offset_i = offset.start / CROSSBAR_COLS;
 				auto offset_j = offset.start % CROSSBAR_COLS;
-				auto read_result = crossbar.readWithInput(offset_i, offset_j, num_edges, d[real_row]);
+				auto read_result = crossbar.readRow(offset_i, offset_j, num_edges);
 				for (auto pair : read_result) {
-					auto j = pair.dest;
-					auto sum = pair.weight;
+					auto j = pair.dest + graph.get_col_offset();
+					auto sum = 1 + d[real_row];
 
 					if (sum < 0)
 						sum = std::numeric_limits<int>::max();
@@ -297,8 +326,12 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 						changed_nodes[j] = true;
 				}
 			}
+			end = std::chrono::system_clock::now();
+			duration = end - start;
+			//std::cout << "processed subgraph! " << duration.count() << std::endl;
 		}
 
+		std::cout << "completed iteration!" << std::endl;
 		active_nodes = changed_nodes;
 		changed_nodes.clear();
 		changed_nodes.resize(round_up(graph.get_dimensions(), CROSSBAR_COLS));
