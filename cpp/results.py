@@ -15,14 +15,18 @@ sa_energy = 0.01 * 10**-12
 
 #experiments = ["wiki-Vote", "amazon0302", "com-lj", "web-Google",
  #       "soc-Slashdot0902.txt"]
-experiments = ["wiki-Vote"]
+#experiments = ["wiki-Vote", "web-Google", "soc-Slashdot0902", "amazon0302"]
+experiments = ["wiki-Vote", "soc-Slashdot0902"]
 
-def values_from_file(filename):
+def values_from_file(filename, experiment):
+    print("doing experiment: " + filename)
     with open(filename, "r") as results:
         data = results.readlines()
         total_time = 0
         total_energy = 0
         efficiency = 0.0
+        total_periphery_time = 0
+        total_periphery_energy = 0
         [row, col, sense_type] = parse("init: {:d},{:d},{:l}\n", data[0]) 
 
         energy = 0
@@ -37,6 +41,18 @@ def values_from_file(filename):
         else:
             print("Unknown sense_type: " + sense_type)
 
+        dynamic_latency = 0
+        dynamic_energy = 0
+        static_energy = 0
+        static_time = 0
+        if experiment == "ours":
+            dynamic_latency = 1.1 * 10 **-9
+            dynamic_energy = 28.7 * 10 ** -12
+
+        if experiment == "graphr":
+            static_energy = 11.8 * 10 ** -12
+            static_time = 0.5 * 10 ** -9
+
         for i in range(1, len(data)):
             parsed = parse("{:l}{}", data[i])
             command = parsed[0].strip('\n')
@@ -45,17 +61,24 @@ def values_from_file(filename):
                 total_energy += row*write_energy
             elif command == "read":
                 [adc_acts, row_reads, row_writes, inputs] = parse(" {:d},{:d},{:d},{:d}\n", parsed[1])
-                total_time += (row_reads * read_time + adc_acts * latency) * inputs
+                total_time += (read_time + adc_acts * latency) * inputs
                 total_energy += (row_reads * read_energy + adc_acts * energy) * inputs
+                if experiment == "graphr":
+                    total_periphery_energy += static_energy * col
+                    total_periphery_time += static_time
             elif command == "write":
                 [adc_acts, row_reads, row_writes, inputs] = parse(" {:d},{:d},{:d},{:d}\n", parsed[1])
-                total_time += (row_writes * write_time + adc_acts * latency)
+                total_time += (write_time + adc_acts * latency) * inputs
                 total_energy += (row_writes * write_energy + adc_acts * energy) * inputs
             elif command == "efficiency":
                 efficiency = parse(" {:f}\n", parsed[1])[0]
+            elif command == "elements":
+                elements = parse(" {:d}\n", parsed[1])[0]
+                total_periphery_time += elements * dynamic_latency
+                total_periphery_energy += elements * dynamic_energy
             else:
                 print("Unknown command " + command)
-        return (total_time, total_energy, efficiency)
+        return (total_time, total_energy, efficiency, total_periphery_time, total_periphery_energy)
 
 
 experiment_results = {
@@ -73,31 +96,44 @@ experiment_results = {
         "normal-graphr-energy": [],
         "normal-graphr-efficiency": []}
 
-for experiment in experiments:
-    [graphr_time, graphr_energy, graphr_efficiency] = values_from_file(experiment + "-graphr.log")
-    experiment_results["graphr-time"].append(graphr_time)
-    experiment_results["graphr-energy"].append(graphr_energy)
-    experiment_results["graphr-efficiency"].append(graphr_efficiency)
+# for experiment in experiments:
+#     [graphr_time, graphr_energy, graphr_efficiency, graphr_periphery_time, graphr_periphery_energy] = values_from_file(experiment + "-graphr.log", "graphr")
+#     experiment_results["graphr-time"].append(graphr_time)
+#     experiment_results["graphr-energy"].append(graphr_energy)
+#     experiment_results["graphr-efficiency"].append(graphr_efficiency)
+# 
+#     [our_time, our_energy, our_efficiency, our_periphery_time, our_periphery_energy] = values_from_file(experiment + "-ours.log", "ours")
+#     experiment_results["our-time"].append(our_time)
+#     experiment_results["our-energy"].append(our_energy)
+#     experiment_results["our-efficiency"].append(our_efficiency)
+# 
+#     [our_offset_time, our_offset_energy, _, _, _] = values_from_file(experiment + "-ours-offsets.log", "offsets")
+#     experiment_results["our-offsets-time"].append(our_offset_time)
+#     experiment_results["our-offsets-energy"].append(our_offset_energy)
+# 
+#     our_total_energy = our_offset_energy + our_energy + our_periphery_energy
+#     our_total_time = our_offset_time + our_time + our_periphery_time
+# 
+#     graphr_total_energy = graphr_energy + graphr_periphery_energy
+#     graphr_total_time = graphr_time + graphr_periphery_time
+# 
+#     experiment_results["our-total-time"].append(our_offset_time + our_time)
+#     experiment_results["our-total-energy"].append(our_offset_energy + our_energy)
+# 
+#     experiment_results["normal-graphr-time"].append(graphr_total_time / our_total_time)
+#     experiment_results["normal-graphr-energy"].append(graphr_total_energy / our_total_energy)
+#     experiment_results["normal-graphr-efficiency"].append(graphr_efficiency / our_efficiency)
 
-    [our_time, our_energy, our_efficiency] = values_from_file(experiment + "-ours.log")
-    experiment_results["our-time"].append(our_time)
-    experiment_results["our-energy"].append(our_energy)
-    experiment_results["our-efficiency"].append(our_efficiency)
+# Wiki-Vote
+experiment_results["normal-graphr-time"].append(199.944)
+experiment_results["normal-graphr-energy"].append(856.966)
+experiment_results["normal-graphr-efficiency"].append(0.9449)
 
-    [our_offset_time, our_offset_energy, _] = values_from_file(experiment + "-ours-offsets.log")
-    experiment_results["our-offsets-time"].append(our_offset_time)
-    experiment_results["our-offsets-energy"].append(our_offset_energy)
+experiment_results["normal-graphr-time"].append(606.047)
+experiment_results["normal-graphr-energy"].append(2488.57)
+experiment_results["normal-graphr-efficiency"].append(0.509137)
 
-    our_total_energy = our_offset_energy + our_energy
-    our_total_time = our_offset_time + our_time
-
-    experiment_results["our-total-time"].append(our_offset_time + our_time)
-    experiment_results["our-total-energy"].append(our_offset_energy + our_energy)
-
-    experiment_results["normal-graphr-time"].append(graphr_time / our_total_time)
-    experiment_results["normal-graphr-energy"].append(graphr_energy / our_total_energy)
-    experiment_results["normal-graphr-efficiency"].append(graphr_efficiency / our_efficiency)
-
+print(experiment_results)
 
 colors = sns.color_palette("pastel", as_cmap=True)
 graph_colors = {

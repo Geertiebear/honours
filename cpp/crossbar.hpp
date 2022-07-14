@@ -38,7 +38,8 @@ public:
 		Stats stats;
 		// We need to do DatatypeSize read operations;
 		stats.row_reads += 1;
-		stats.adc_activations = DatatypeSize * ((offset % opts.cols_per_adc) + (num * opts.cols_per_adc) + (num % opts.cols_per_adc));
+		stats.adc_activations = ((offset % opts.cols_per_adc) + (DatatypeSize * num * opts.cols_per_adc) + (DatatypeSize * num % opts.cols_per_adc));
+		stats.inputs = 1;
 		logOperation("read", stats);
 
 		std::vector<ValueType> array(num);
@@ -49,7 +50,7 @@ public:
 	std::vector<ValueType> readWithInput(size_t row, size_t offset, size_t num, int input) {
 		Stats stats;
 		stats.row_reads += 1;
-		stats.adc_activations = DatatypeSize * ((offset % opts.cols_per_adc) + (num * opts.cols_per_adc) + (num % opts.cols_per_adc));
+		stats.adc_activations = ((offset % opts.cols_per_adc) + (DatatypeSize * num * opts.cols_per_adc) + (DatatypeSize * num % opts.cols_per_adc));
 		stats.inputs = DatatypeSize;
 		logOperation("read", stats);
 
@@ -88,6 +89,10 @@ public:
 	void init() {
 		std::string sense_type(opts.adc ? "adc" : "sa");
 		*log_file << "init: " << opts.cols << "," << opts.rows << "," << sense_type << "\n";
+	}
+
+	void logElements(size_t amount) {
+		*log_file << "elements" << " " << amount << "\n";
 	}
 
 	template <typename F>

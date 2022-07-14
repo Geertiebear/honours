@@ -51,7 +51,7 @@ constexpr auto round_up(const auto a, const auto b) {
 	return ((a + b - 1) / b)*b;
 }
 
-constexpr unsigned int ITERATIONS = 2;
+constexpr unsigned int ITERATIONS = 20000;
 constexpr unsigned int CROSSBAR_ROWS = 256;
 constexpr unsigned int CROSSBAR_COLS = 256;
 Crossbar<Pair> crossbar;

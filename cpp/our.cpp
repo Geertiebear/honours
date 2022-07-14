@@ -38,7 +38,7 @@ struct Offset {
 };
 
 std::vector<size_t> edge_counts;
-constexpr unsigned int ITERATIONS = 2;
+constexpr unsigned int ITERATIONS = 20000;
 constexpr unsigned int CROSSBAR_ROWS = 256;
 constexpr unsigned int CROSSBAR_COLS = 256;
 Crossbar<Pair> crossbar;
@@ -313,6 +313,7 @@ static std::vector<int> run_algorithm(size_t start_node, GraphOrdering &graph) {
 				auto offset_i = offset.start / CROSSBAR_COLS;
 				auto offset_j = offset.start % CROSSBAR_COLS;
 				auto read_result = crossbar.readRow(offset_i, offset_j, num_edges);
+				crossbar.logElements(read_result.size());
 				for (auto pair : read_result) {
 					auto j = pair.dest + graph.get_col_offset();
 					auto sum = 1 + d[real_row];
