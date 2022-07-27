@@ -52,8 +52,8 @@ constexpr auto round_up(const auto a, const auto b) {
 }
 
 constexpr unsigned int ITERATIONS = 20000;
-constexpr unsigned int CROSSBAR_ROWS = 256;
-constexpr unsigned int CROSSBAR_COLS = 256;
+constexpr unsigned int CROSSBAR_ROWS = 128;
+constexpr unsigned int CROSSBAR_COLS = 128;
 Crossbar<Pair> crossbar;
 std::vector<double> efficiences;
 

@@ -16,7 +16,7 @@ sa_energy = 0.01 * 10**-12
 #experiments = ["wiki-Vote", "amazon0302", "com-lj", "web-Google",
  #       "soc-Slashdot0902.txt"]
 #experiments = ["wiki-Vote", "web-Google", "soc-Slashdot0902", "amazon0302"]
-experiments = ["wiki-Vote", "soc-Slashdot0902"]
+experiments = ["wiki-Vote", "soc-Slashdot0902", "amazon0302", "soc-Epinions1"]
 
 def values_from_file(filename, experiment):
     print("doing experiment: " + filename)
@@ -125,13 +125,21 @@ experiment_results = {
 #     experiment_results["normal-graphr-efficiency"].append(graphr_efficiency / our_efficiency)
 
 # Wiki-Vote
-experiment_results["normal-graphr-time"].append(199.944)
-experiment_results["normal-graphr-energy"].append(856.966)
-experiment_results["normal-graphr-efficiency"].append(0.9449)
+experiment_results["normal-graphr-time"].append(102.234)
+experiment_results["normal-graphr-energy"].append(458.843)
+experiment_results["normal-graphr-efficiency"].append(0.895387)
 
-experiment_results["normal-graphr-time"].append(606.047)
-experiment_results["normal-graphr-energy"].append(2488.57)
-experiment_results["normal-graphr-efficiency"].append(0.509137)
+experiment_results["normal-graphr-time"].append(157.172)
+experiment_results["normal-graphr-energy"].append(790.718)
+experiment_results["normal-graphr-efficiency"].append(0.307994)
+
+experiment_results["normal-graphr-time"].append(31.7518)
+experiment_results["normal-graphr-energy"].append(205.106)
+experiment_results["normal-graphr-efficiency"].append(0.126417)
+
+experiment_results["normal-graphr-time"].append(156.015)
+experiment_results["normal-graphr-energy"].append(1102.22)
+experiment_results["normal-graphr-efficiency"].append(0.173824)
 
 print(experiment_results)
 

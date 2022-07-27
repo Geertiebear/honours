@@ -3,7 +3,7 @@
 #include <string>
 #include <string.h>
 
-const char *experiments[] = {"wiki-Vote", "soc-Slashdot0902"};
+const char *experiments[] = {"wiki-Vote", "soc-Slashdot0902", "amazon0302", "soc-Epinions1"};
 
 struct Result {
 	float total_time = 0, total_energy = 0, efficiency = 0,
