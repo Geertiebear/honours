@@ -69,12 +69,12 @@ Stats SparseMEM::expand_to_crossbar(const SubGraph &sub_graph) {
 
 	for (auto &tuple : tuples) {
 		auto degree = degrees[tuple.i - _row_offset];
-		if (degree > max_rows)
+		if (degree >= max_rows)
 			std::cout << "too large degree: " << degree << std::endl;
-		assert(degree <= max_rows);
+		assert(degree < max_rows);
 
 		auto offset = row * max_rows + column;
-		if (offset_array[tuple.i - _row_offset].start == std::numeric_limits<int>::max()) {
+		if (offset_array[tuple.i - _row_offset].start == std::numeric_limits<size_t>::max()) {
 			if (degree > max_rows - column) {
 				stats += _data_crossbar.writeRow(row, 0, max_rows, vals);
 				row++;

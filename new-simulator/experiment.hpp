@@ -100,9 +100,9 @@ public:
 		size_t start, stop;
 	};
 
-	SparseMEM(CrossbarOptions data_options, CrossbarOptions offset_options)
-	: _options(data_options), _data_crossbar(data_options),
-	_offset_crossbar(offset_options)
+	SparseMEM(CrossbarOptions options)
+	: _options(options), _data_crossbar(options),
+	_offset_crossbar(options)
 	{}
 
 	template<typename RowFunc, typename ElementFunc, typename Data>
@@ -135,7 +135,7 @@ public:
 
 			for (auto elem : read_res) {
 				auto j = elem.dest + _col_offset;
-				elem_fun(data, j, *row_input);
+				elem_func(data, j, *row_input);
 			}
 		}
 
