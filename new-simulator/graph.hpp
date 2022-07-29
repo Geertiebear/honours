@@ -25,15 +25,13 @@ public:
 	Graph operator= (const Graph &) = delete;
 	Graph &operator= (Graph &&) = default;
 
-	SubGraph next_subgraph();
-	bool has_next_subgraph() const;
-	bool last_column() const;
-	void reset_position();
 	size_t get_dimensions() const;
+	size_t get_num_subgraphs() const;
+	size_t get_subgraph_row(size_t subgraph) const;
+	size_t get_subgraph_col(size_t subgraph) const;
+	SubGraph get_subgraph_at(size_t subgraph) const;
 private:
 	size_t _max_row, _max_col;
-	size_t _current_row = 0, _current_col = 0,
-		_next_row = 0, _next_col = 0;
 	size_t _dimensions;
 	std::vector<Tuple> _tuples;
 };

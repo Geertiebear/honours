@@ -35,18 +35,34 @@ Graph::Graph(const std::string &filepath, size_t max_row, size_t max_col)
 	fclose(fp);
 }
 
-SubGraph Graph::next_subgraph() {
-	_current_row = _next_row;
-	_current_col = _next_col;
+size_t Graph::get_dimensions() const {
+	return _dimensions;
+}
+
+size_t Graph::get_num_subgraphs() const {
+	return _dimensions;
+}
+
+size_t Graph::get_subgraph_row(size_t subgraph) const {
+	return subgraph % _max_col;
+}
+
+size_t Graph::get_subgraph_col(size_t subgraph) const {
+	return subgraph / _max_col;
+}
+
+SubGraph Graph::get_subgraph_at(size_t subgraph) const {
+	const auto row = get_subgraph_row(subgraph);
+	const auto col = get_subgraph_col(subgraph);
 
 	auto col_comp = [] (auto a, auto b) -> bool {
 		return a.j < b.j;
 	};
 
 	auto lower_col = std::lower_bound(_tuples.begin(), _tuples.end(),
-			Tuple{0, _current_col * _max_col, 0}, col_comp);
+			Tuple{0, col * _max_col, 0}, col_comp);
 	auto upper_col = std::upper_bound(_tuples.begin(), _tuples.end(),
-			Tuple{0, (_current_col + 1) * _max_col - 1, 0}, col_comp);
+			Tuple{0, (col + 1) * _max_col - 1, 0}, col_comp);
 
 	std::vector<Tuple> temp(lower_col, upper_col);
 	std::sort(temp.begin(), temp.end(), [] (auto a, auto b) {
@@ -60,34 +76,10 @@ SubGraph Graph::next_subgraph() {
 	};
 
 	auto lower_row = std::lower_bound(temp.begin(), temp.end(),
-			Tuple{_current_row * _max_row, 0, 0}, row_comp);
+			Tuple{row * _max_row, 0, 0}, row_comp);
 	auto upper_row = std::upper_bound(temp.begin(), temp.end(),
-			Tuple{(_current_row + 1) * _max_row - 1, 0, 0}, row_comp);
+			Tuple{(row + 1) * _max_row - 1, 0, 0}, row_comp);
 
-	_next_col++;
-	if (_next_col * _max_col >= _dimensions) {
-		_next_col = 0;
-		_next_row++;
-	}
-
-	return SubGraph{_current_row * _max_row, _current_col * _max_col,
+	return SubGraph{row * _max_row, col * _max_col,
 		std::vector<Tuple>(lower_row, upper_row)};
-}
-
-bool Graph::has_next_subgraph() const {
-	auto limit = round_up(_dimensions, _max_row);
-	return _next_row * _max_row < limit;
-}
-
-bool Graph::last_column() const {
-	auto limit = round_up(_dimensions, _max_col);
-	return (_current_row + 1) * _max_col < limit;
-}
-
-void Graph::reset_position() {
-	_current_row = _current_col = _next_row = _next_col = 0;
-}
-
-size_t Graph::get_dimensions() const {
-	return _dimensions;
 }

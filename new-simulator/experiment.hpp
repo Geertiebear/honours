@@ -179,42 +179,33 @@ public:
 	template <typename RowFunc, typename ElementFunc>
 	void run_kernel(RowFunc row_func, ElementFunc element_func) {
 		const auto num_threads = omp_get_max_threads();
-		std::vector<SubGraph> sub_graphs(num_threads);
 
 		_local_stats.clear();
 		_local_stats.resize(num_threads);
-		_graph->reset_position();
 
 		std::fill(_local_data.begin(), _local_data.end(),
 				_global_data);
 
-		bool done = false;
-		while (!done) {
+		#pragma omp parallel
+		{
+			const auto t = omp_get_thread_num();
+			auto &local_data = _local_data[t];
+			auto &approach = _approaches[t];
+			auto &stats = _local_stats[t];
 
-			done = true;
-			// Populate the subgraphs.
-			for (int i = 0; i < num_threads; i++) {
-				if (!_graph->has_next_subgraph()) {
-					sub_graphs[i] = SubGraph{};
-					continue;
-				}
-
-				done = false;
-				sub_graphs[i] = _graph->next_subgraph();
-			}
-
-			#pragma omp parallel
-			{
-				const auto t = omp_get_thread_num();
-				auto &local_data = _local_data[t];
-				auto &sub_graph = sub_graphs[t];
-				auto &approach = _approaches[t];
-				auto &stats = _local_stats[t];
+			const auto num_subgraphs = _graph->get_num_subgraphs();
+			auto subgraphs_per_t = num_subgraphs / num_threads;
+			if (t == num_threads - 1)
+				subgraphs_per_t += num_subgraphs % num_threads;
+			
+			for (size_t i = 0; i < subgraphs_per_t; i++) {
+				const auto index = i + subgraphs_per_t * t;
+				const auto subgraph = _graph->get_subgraph_at(index);
 
 				stats += approach.clear();
-				stats += approach.expand_to_crossbar(sub_graph);
-				stats += approach.run_kernel(row_func, element_func,
-						local_data);
+				stats += approach.expand_to_crossbar(subgraph);
+				stats += approach.run_kernel(row_func,
+						element_func, local_data);
 			}
 		}
 	}
