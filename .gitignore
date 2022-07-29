@@ -1,6 +1,8 @@
 !*.m
 cpp/*
+new-simulator/*
 !*.cpp
 !*.hpp
 !.gitignore
 !*.py
+!meson.build

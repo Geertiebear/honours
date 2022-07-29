@@ -5,10 +5,13 @@
 #include <string>
 #include <fstream>
 #include <array>
+#include <algorithm>
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 
 struct CrossbarOptions {
+	int default_value;
 	size_t rows, cols, input_resolution, cols_per_adc;
 	bool adc;
 };
