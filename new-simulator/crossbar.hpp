@@ -41,13 +41,12 @@ public:
 
 	std::tuple<Stats, std::vector<T>> readRow(size_t row, size_t offset, size_t num) {
 		Stats stats;
-
-		const auto adc_activations = ((offset % _options.cols_per_adc) +
-				(_options.datatype_size * num *
-				_options.cols_per_adc) + (_options.datatype_size
-					* num % _options.cols_per_adc));
+		// Pattern: more adcs should decrease latency but increase
+		// energy.
+		const auto adc_activations = _options.cols_per_adc *
+			_options.datatype_size;
 		const auto adc_latency = adc_activations * _analogue_latency();
-		const auto adc_energy = adc_activations * _analogue_energy();
+		const auto adc_energy = num * _options.datatype_size * _analogue_energy();
 		const auto static_latency = num * _options.static_latency;
 		const auto static_energy = num * _options.static_energy;
 
@@ -67,13 +66,11 @@ public:
 	std::tuple<Stats, std::vector<T>> readWithInput(size_t row, size_t offset, size_t num, int input) {
 		Stats stats;
 
-		const auto adc_activations = ((offset % _options.cols_per_adc) +
-				(_options.datatype_size * num *
-				_options.cols_per_adc) + (_options.datatype_size
-				* num % _options.cols_per_adc))
-			* _options.datatype_size;
+		const auto adc_activations = _options.cols_per_adc *
+			_options.datatype_size * _options.datatype_size;
 		const auto adc_latency = adc_activations * _analogue_latency();
-		const auto adc_energy = adc_activations * _analogue_energy();
+		const auto adc_energy = num * _options.datatype_size *
+			_options.datatype_size * _analogue_energy();
 		const auto static_latency = num * _options.static_latency;
 		const auto static_energy = num * _options.static_energy;
 
@@ -108,8 +105,8 @@ public:
 
 	Stats clear() {
 		Stats stats;
-		stats.total_crossbar_time += _options.write_latency *
-			_options.num_rows;
+		stats.total_crossbar_time += _options.write_latency;
+
 		stats.total_crossbar_energy += _options.write_energy *
 			_options.num_rows * _options.num_cols;
 		for (auto &a : _crossbar)

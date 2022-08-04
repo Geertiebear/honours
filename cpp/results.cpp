@@ -113,6 +113,8 @@ int main() {
 		std::cout << "normal graphr time: " << graphr_total_time / our_total_time << std::endl;
 		std::cout << "normal graphr energy: " << graphr_total_energy / our_total_energy << std::endl;
 		std::cout << "normal graphr efficiency: " << graphr_res.efficiency / our_res.efficiency << std::endl;
+		std::cout << "graphr time: " << graphr_total_time << std::endl;
+		std::cout << "our time: " << our_total_time << std::endl;
 	}
 	return 0;
 }

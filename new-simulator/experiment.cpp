@@ -33,6 +33,7 @@ Stats Graphr::expand_to_crossbar(const SubGraph &sub_graph) {
 	stats.efficiency += _crossbar.space_efficiency([] (Data &val) {
 		return val.weight != std::numeric_limits<short>::max();
 	});
+	stats.num_efficiencies++;
 	populated = true;
 	return stats;
 }
@@ -69,9 +70,9 @@ Stats SparseMEM::expand_to_crossbar(const SubGraph &sub_graph) {
 
 	for (auto &tuple : tuples) {
 		auto degree = degrees[tuple.i - _row_offset];
-		if (degree >= max_rows)
+		if (degree > max_rows)
 			std::cout << "too large degree: " << degree << std::endl;
-		assert(degree < max_rows);
+		assert(degree <= max_rows);
 
 		auto offset = row * max_rows + column;
 		if (offset_array[tuple.i - _row_offset].start == std::numeric_limits<size_t>::max()) {

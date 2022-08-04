@@ -5,6 +5,22 @@
 #include "util.hpp"
 #include "graph.hpp"
 
+namespace {
+
+	constexpr float READ_TIME = 10e-9;
+	constexpr float WRITE_TIME = 100e-9;
+	constexpr float ADC_LATENCY = 1e-9;
+	constexpr float READ_ENERGY = 40e-15;
+	constexpr float WRITE_ENERGY = 20e-12;
+	constexpr float ADC_ENERGY = 2e-12;
+	constexpr float SA_LATENCY = 1e-9;
+	constexpr float SA_ENERGY = 10e-12;
+	constexpr float STATIC_ENERGY = 11.8e-12;
+	constexpr float STATIC_LATENCY = 0.5e-9;
+	constexpr float DYNAMIC_LATENCY = 1.1e-9;
+	constexpr float DYNAMIC_ENERGY = 28.8e-12;
+}
+
 int main(int argc, char **argv) {
 
 	if (!argv[1]) {
@@ -63,6 +79,7 @@ int main(int argc, char **argv) {
 	};
 
 	std::vector<short> graphr_result;
+	Stats graphr_stats;
 
 	{
 
@@ -76,7 +93,20 @@ int main(int argc, char **argv) {
 		options.num_rows = 128;
 		options.num_cols = 128;
 		options.cols_per_adc = 32;
+		options.datatype_size = 16;
 		options.read_device = ADC;
+		options.read_latency = READ_TIME;
+		options.read_energy = READ_ENERGY;
+		options.write_latency = WRITE_TIME;
+		options.write_energy = WRITE_ENERGY;
+		options.adc_latency = ADC_LATENCY;
+		options.adc_energy = ADC_ENERGY;
+		options.sa_latency = SA_LATENCY;
+		options.sa_energy = SA_ENERGY;
+		options.static_energy = STATIC_ENERGY;
+		options.static_latency = STATIC_LATENCY;
+		options.dynamic_energy = 0;
+		options.dynamic_latency = 0;
 		Experiment<Graphr, Data> experiment(options, 5U,
 				graph->get_dimensions(), 128LU);
 		experiment.set_graph(graph);
@@ -92,9 +122,11 @@ int main(int argc, char **argv) {
 		}
 
 		graphr_result = data.d;
+		graphr_stats = experiment.get_stats();
 	}
 
 	std::vector<short> sparse_mem_result;
+	Stats sparse_mem_stats;
 
 	{
 		auto elem_func = [] (Data &data, size_t j, short input) {
@@ -107,8 +139,21 @@ int main(int argc, char **argv) {
 		CrossbarOptions options;
 		options.num_rows = 128;
 		options.num_cols = 128;
-		options.cols_per_adc = 32;
-		options.read_device = ADC;
+		options.cols_per_adc = 4;
+		options.datatype_size = 16;
+		options.read_device = SA;
+		options.read_latency = READ_TIME;
+		options.read_energy = READ_ENERGY;
+		options.write_latency = WRITE_TIME;
+		options.write_energy = WRITE_ENERGY;
+		options.adc_latency = ADC_LATENCY;
+		options.adc_energy = ADC_ENERGY;
+		options.sa_latency = SA_LATENCY;
+		options.sa_energy = SA_ENERGY;
+		options.static_energy = 0;
+		options.static_latency = 0;
+		options.dynamic_energy = DYNAMIC_ENERGY;
+		options.dynamic_latency = DYNAMIC_LATENCY;
 		Experiment<SparseMEM, Data> experiment(options, 5U,
 				graph->get_dimensions(), 128LU);
 		experiment.set_graph(graph);
@@ -124,9 +169,16 @@ int main(int argc, char **argv) {
 		}
 
 		sparse_mem_result = data.d;
+		sparse_mem_stats = experiment.get_stats();
 	}
 
 	assert(graphr_result.size() == sparse_mem_result.size());
 	for (size_t i = 0; i < graphr_result.size(); i++)
 		assert(graphr_result[i] == sparse_mem_result[i]);
+
+	std::cout << "Graphr stats: " << std::endl;
+	graphr_stats.print();
+
+	std::cout << "SparseMEM stats: " << std::endl;
+	sparse_mem_stats.print();
 }

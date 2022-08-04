@@ -146,6 +146,8 @@ public:
 	Stats clear();
 private:
 	void _add_dynamic_stats(Stats &stats, int num) {
+		stats.total_periphery_time += num * _options.dynamic_latency;
+		stats.total_periphery_energy += num * _options.dynamic_energy;
 	}
 
 	CrossbarOptions _options;
@@ -224,6 +226,10 @@ public:
 
 	Data &get_data() {
 		return _global_data;
+	}
+
+	Stats &get_stats() {
+		return _global_stats;
 	}
 private:
 	std::shared_ptr<Graph> _graph;
