@@ -16,7 +16,7 @@ enum ReadDevice {
 struct CrossbarOptions {
 	size_t num_rows, num_cols;
 	int datatype_size;
-	int cols_per_adc;
+	float cols_per_adc;
 	ReadDevice read_device;
 	float read_latency;
 	float write_latency;
@@ -46,13 +46,14 @@ public:
 		const auto adc_activations = _options.cols_per_adc *
 			_options.datatype_size;
 		const auto adc_latency = adc_activations * _analogue_latency();
-		const auto adc_energy = num * _options.datatype_size * _analogue_energy();
-		const auto static_latency = num * _options.static_latency;
+		const auto adc_energy = _options.num_cols / _options.cols_per_adc
+			* _options.datatype_size * _analogue_energy();
+		const auto static_latency = _options.static_latency;
 		const auto static_energy = num * _options.static_energy;
 
 		stats.total_crossbar_time += adc_latency + _options.read_latency;
 		stats.total_crossbar_energy += adc_energy +
-			num * _options.read_energy;
+			num * _options.datatype_size * _options.read_energy;
 		stats.total_periphery_time += static_latency;
 		stats.total_periphery_energy += static_energy;
 
@@ -71,12 +72,12 @@ public:
 		const auto adc_latency = adc_activations * _analogue_latency();
 		const auto adc_energy = num * _options.datatype_size *
 			_options.datatype_size * _analogue_energy();
-		const auto static_latency = num * _options.static_latency;
+		const auto static_latency = _options.static_latency;
 		const auto static_energy = num * _options.static_energy;
 
 		stats.total_crossbar_time += adc_latency + _options.read_latency;
 		stats.total_crossbar_energy += adc_energy +
-			num * _options.read_energy;
+			num * _options.datatype_size * _options.read_energy;
 		stats.total_periphery_time += static_latency;
 		stats.total_periphery_energy += static_energy;
 
@@ -97,7 +98,8 @@ public:
 		assert(vals.size() == _options.num_cols);
 
 		stats.total_crossbar_time += _options.write_latency;	
-		stats.total_crossbar_energy += _options.write_energy * num;
+		stats.total_crossbar_energy += _options.write_energy * num
+			* _options.datatype_size;
 
 		std::copy(vals.begin(), vals.end(), _crossbar.begin() + row * _options.num_cols);
 		return stats;

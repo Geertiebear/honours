@@ -14,7 +14,7 @@ namespace {
 	constexpr float WRITE_ENERGY = 20e-12;
 	constexpr float ADC_ENERGY = 2e-12;
 	constexpr float SA_LATENCY = 1e-9;
-	constexpr float SA_ENERGY = 10e-12;
+	constexpr float SA_ENERGY = 10e-15;
 	constexpr float STATIC_ENERGY = 11.8e-12;
 	constexpr float STATIC_LATENCY = 0.5e-9;
 	constexpr float DYNAMIC_LATENCY = 1.1e-9;
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
 		CrossbarOptions options;
 		options.num_rows = 128;
 		options.num_cols = 128;
-		options.cols_per_adc = 32;
+		options.cols_per_adc = 2;
 		options.datatype_size = 16;
 		options.read_device = ADC;
 		options.read_latency = READ_TIME;
@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
 		CrossbarOptions options;
 		options.num_rows = 128;
 		options.num_cols = 128;
-		options.cols_per_adc = 4;
+		options.cols_per_adc = 4/16;
 		options.datatype_size = 16;
 		options.read_device = SA;
 		options.read_latency = READ_TIME;
