@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
 		CrossbarOptions options;
 		options.num_rows = 128;
 		options.num_cols = 128;
-		options.cols_per_adc = 4/16;
+		options.cols_per_adc = 0.25;
 		options.datatype_size = 16;
 		options.read_device = SA;
 		options.read_latency = READ_TIME;
