@@ -34,6 +34,14 @@ Stats Graphr::expand_to_crossbar(const SubGraph &sub_graph) {
 	}
 
 	stats += _crossbar.writeRow(row, 0, max_cols, vals);
+
+	if (row != max_rows) {
+		vals.clear();
+		vals.resize(max_cols);
+		for (size_t i = row + 1; i < max_rows; i++)
+			stats += _crossbar.writeRow(i, 0, max_cols, vals);
+	}
+
 	stats.efficiency += _crossbar.space_efficiency([] (Data &val) {
 		return val.weight != std::numeric_limits<short>::max();
 	});
