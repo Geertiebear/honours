@@ -7,18 +7,22 @@
 
 Stats Graphr::expand_to_crossbar(const SubGraph &sub_graph) {
 	Stats stats;
-	if (sub_graph.tuples.empty())
+	const auto max_rows = _crossbar.get_num_rows();
+	const auto max_cols = _crossbar.get_num_cols();
+
+	std::vector<Data> vals(max_cols);
+	if (sub_graph.tuples.empty()) {
+		for (size_t i = 0; i < max_rows; i++)
+			stats += _crossbar.writeRow(i, 0, max_cols, vals);
 		return stats;
+	}
 
 	_row_offset = sub_graph.row_offset;
 	_col_offset = sub_graph.col_offset;
 
 	const auto &tuples = sub_graph.tuples;
-	const auto max_rows = _crossbar.get_num_rows();
-	const auto max_cols = _crossbar.get_num_cols();
 
 	size_t row = 0;
-	std::vector<Data> vals(max_cols);
 	for (auto &tuple : tuples) {
 		if ((tuple.i - _row_offset) != row) {
 			stats += _crossbar.writeRow(row, 0, max_cols, vals);
@@ -29,7 +33,7 @@ Stats Graphr::expand_to_crossbar(const SubGraph &sub_graph) {
 		vals[tuple.j - _col_offset] = Data{1};
 	}
 
-	stats += _crossbar.writeRow(row, 0, max_rows, vals);
+	stats += _crossbar.writeRow(row, 0, max_cols, vals);
 	stats.efficiency += _crossbar.space_efficiency([] (Data &val) {
 		return val.weight != std::numeric_limits<short>::max();
 	});
@@ -77,7 +81,7 @@ Stats SparseMEM::expand_to_crossbar(const SubGraph &sub_graph) {
 		auto offset = row * max_rows + column;
 		if (offset_array[tuple.i - _row_offset].start == std::numeric_limits<size_t>::max()) {
 			if (degree > max_rows - column) {
-				stats += _data_crossbar.writeRow(row, 0, max_rows, vals);
+				stats += _data_crossbar.writeRow(row, 0, column + 1, vals);
 				row++;
 				column = 0;
 				vals.clear();
@@ -94,8 +98,8 @@ Stats SparseMEM::expand_to_crossbar(const SubGraph &sub_graph) {
 		vals[column] = Data{static_cast<unsigned short>(tuple.j - _col_offset)};
 		column++;
 	}
-	stats += _data_crossbar.writeRow(row, 0, max_rows, vals);
-	stats += _offset_crossbar.writeRow(0, 0, max_rows, offset_array);
+	stats += _data_crossbar.writeRow(row, 0, column, vals);
+	stats += _offset_crossbar.writeRow(0, 0, row, offset_array);
 
 	populated = true;
 

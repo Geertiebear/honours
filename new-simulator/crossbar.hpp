@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <vector>
 #include <tuple>
+#include <iostream>
 
 enum ReadDevice {
 	ADC,
@@ -46,8 +47,8 @@ public:
 		const auto adc_activations = _options.cols_per_adc *
 			_options.datatype_size;
 		const auto adc_latency = adc_activations * _analogue_latency();
-		const auto adc_energy = _options.num_cols / _options.cols_per_adc
-			* _options.datatype_size * _analogue_energy();
+		const auto total_adc_acts = num * _options.datatype_size;
+		const auto adc_energy = total_adc_acts * _analogue_energy();
 		const auto static_latency = _options.static_latency;
 		const auto static_energy = num * _options.static_energy;
 
@@ -56,6 +57,8 @@ public:
 			num * _options.datatype_size * _options.read_energy;
 		stats.total_periphery_time += static_latency;
 		stats.total_periphery_energy += static_energy;
+		stats.num_read_cells += num;
+		stats.num_adc_acts += total_adc_acts;
 
 		std::vector<T> array(num);
 		std::copy(_crossbar.begin() + (row * _options.num_cols) + offset,
@@ -67,11 +70,13 @@ public:
 	std::tuple<Stats, std::vector<T>> readWithInput(size_t row, size_t offset, size_t num, int input) {
 		Stats stats;
 
+		// num will always be number of columns
 		const auto adc_activations = _options.cols_per_adc *
 			_options.datatype_size * _options.datatype_size;
 		const auto adc_latency = adc_activations * _analogue_latency();
-		const auto adc_energy = num * _options.datatype_size *
-			_options.datatype_size * _analogue_energy();
+		const auto total_adc_acts = num * 
+			 _options.datatype_size * _options.datatype_size;
+		const auto adc_energy = total_adc_acts * _analogue_energy();
 		const auto static_latency = _options.static_latency;
 		const auto static_energy = num * _options.static_energy;
 
@@ -80,6 +85,8 @@ public:
 			num * _options.datatype_size * _options.read_energy;
 		stats.total_periphery_time += static_latency;
 		stats.total_periphery_energy += static_energy;
+		stats.num_read_cells += num;
+		stats.num_adc_acts += total_adc_acts;
 
 		std::vector<T> array(num);
 		std::copy(_crossbar.begin() + (row * _options.num_cols) + offset,
@@ -100,6 +107,7 @@ public:
 		stats.total_crossbar_time += _options.write_latency;	
 		stats.total_crossbar_energy += _options.write_energy * num
 			* _options.datatype_size;
+		stats.num_written_cells += num;
 
 		std::copy(vals.begin(), vals.end(), _crossbar.begin() + row * _options.num_cols);
 		return stats;
@@ -107,10 +115,6 @@ public:
 
 	Stats clear() {
 		Stats stats;
-		stats.total_crossbar_time += _options.write_latency;
-
-		stats.total_crossbar_energy += _options.write_energy *
-			_options.num_rows * _options.num_cols;
 		for (auto &a : _crossbar)
 			a = T{};
 		return stats;

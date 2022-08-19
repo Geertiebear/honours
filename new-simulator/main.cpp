@@ -128,6 +128,8 @@ int main(int argc, char **argv) {
 	std::vector<short> sparse_mem_result;
 	Stats sparse_mem_stats;
 
+	std::cout << "START OF SPARSEMEM SIMULATION" << std::endl;
+
 	{
 		auto elem_func = [] (Data &data, size_t j, short input) {
 			auto old_d = data.d[j];
