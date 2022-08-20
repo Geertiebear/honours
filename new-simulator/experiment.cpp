@@ -10,6 +10,10 @@ Stats Graphr::expand_to_crossbar(const SubGraph &sub_graph) {
 	const auto max_rows = _crossbar.get_num_rows();
 	const auto max_cols = _crossbar.get_num_cols();
 
+	// Optimisation
+	if (sub_graph.tuples.empty())
+		return stats;
+
 	std::vector<Data> vals(max_cols);
 	if (sub_graph.tuples.empty()) {
 		for (size_t i = 0; i < max_rows; i++)

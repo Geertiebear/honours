@@ -17,6 +17,7 @@ enum ReadDevice {
 struct CrossbarOptions {
 	size_t num_rows, num_cols;
 	int datatype_size;
+	int input_size;
 	float cols_per_adc;
 	ReadDevice read_device;
 	float read_latency;
@@ -72,10 +73,10 @@ public:
 
 		// num will always be number of columns
 		const auto adc_activations = _options.cols_per_adc *
-			_options.datatype_size * _options.datatype_size;
+			_options.datatype_size * _options.input_size;
 		const auto adc_latency = adc_activations * _analogue_latency();
 		const auto total_adc_acts = num * 
-			 _options.datatype_size * _options.datatype_size;
+			 _options.datatype_size * _options.input_size;
 		const auto adc_energy = total_adc_acts * _analogue_energy();
 		const auto static_latency = _options.static_latency;
 		const auto static_energy = num * _options.static_energy;
