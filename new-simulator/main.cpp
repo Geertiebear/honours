@@ -443,7 +443,7 @@ void run_pagerank(char **argv) {
 		
 		for (auto &t : new_subgraph.tuples) {
 			assert(degrees[t.i - row_offset]);
-			t.weight = (r * (float)data.score[t.j] /
+			t.weight = (r * (float)data.score[t.i] /
 					(float)degrees[t.i - row_offset]);
 			assert(!std::isnan(t.weight));
 			assert(!std::isinf(t.weight));
