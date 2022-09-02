@@ -17,7 +17,28 @@ experiments = ["WV", "AZ",
        "SD", "EP", "OK"]
 #experiments = ["wiki-Vote", "web-Google", "soc-Slashdot0902", "amazon0302"]
 
-experiment_results = {
+sssp_results = {
+        "graphr-total-time": [],
+        "graphr-total-energy": [],
+        "graphr-efficiency": [],
+        "our-time": [],
+        "our-energy": [],
+        "our-efficiency": [],
+        "our-offsets-time" : [],
+        "our-offsets-energy": [],
+        "our-total-time": [],
+        "our-total-energy": [],
+        "gpu-total-time": [],
+        "gpu-total-energy": [],
+        "normal-gpu-time": [],
+        "normal-gpu-energy": [],
+        "normal-graphsar-time": [],
+        "normal-graphsar-energy": [],
+        "normal-graphr-time": [],
+        "normal-graphr-energy": [],
+        "normal-graphr-efficiency": []}
+
+bfs_results = {
         "graphr-total-time": [],
         "graphr-total-energy": [],
         "graphr-efficiency": [],
@@ -43,18 +64,18 @@ graphsar_energy_factor = 4.43
 
 # for experiment in experiments:
 #     [graphr_time, graphr_energy, graphr_efficiency, graphr_periphery_time, graphr_periphery_energy] = values_from_file(experiment + "-graphr.log", "graphr")
-#     experiment_results["graphr-time"].append(graphr_time)
-#     experiment_results["graphr-energy"].append(graphr_energy)
-#     experiment_results["graphr-efficiency"].append(graphr_efficiency)
+#     sssp_results["graphr-time"].append(graphr_time)
+#     sssp_results["graphr-energy"].append(graphr_energy)
+#     sssp_results["graphr-efficiency"].append(graphr_efficiency)
 # 
 #     [our_time, our_energy, our_efficiency, our_periphery_time, our_periphery_energy] = values_from_file(experiment + "-ours.log", "ours")
-#     experiment_results["our-time"].append(our_time)
-#     experiment_results["our-energy"].append(our_energy)
-#     experiment_results["our-efficiency"].append(our_efficiency)
+#     sssp_results["our-time"].append(our_time)
+#     sssp_results["our-energy"].append(our_energy)
+#     sssp_results["our-efficiency"].append(our_efficiency)
 # 
 #     [our_offset_time, our_offset_energy, _, _, _] = values_from_file(experiment + "-ours-offsets.log", "offsets")
-#     experiment_results["our-offsets-time"].append(our_offset_time)
-#     experiment_results["our-offsets-energy"].append(our_offset_energy)
+#     sssp_results["our-offsets-time"].append(our_offset_time)
+#     sssp_results["our-offsets-energy"].append(our_offset_energy)
 # 
 #     our_total_energy = our_offset_energy + our_energy + our_periphery_energy
 #     our_total_time = our_offset_time + our_time + our_periphery_time
@@ -62,93 +83,171 @@ graphsar_energy_factor = 4.43
 #     graphr_total_energy = graphr_energy + graphr_periphery_energy
 #     graphr_total_time = graphr_time + graphr_periphery_time
 # 
-#     experiment_results["our-total-time"].append(our_offset_time + our_time)
-#     experiment_results["our-total-energy"].append(our_offset_energy + our_energy)
+#     sssp_results["our-total-time"].append(our_offset_time + our_time)
+#     sssp_results["our-total-energy"].append(our_offset_energy + our_energy)
 # 
-#     experiment_results["normal-graphr-time"].append(graphr_total_time / our_total_time)
-#     experiment_results["normal-graphr-energy"].append(graphr_total_energy / our_total_energy)
-#     experiment_results["normal-graphr-efficiency"].append(graphr_efficiency / our_efficiency)
+#     sssp_results["normal-graphr-time"].append(graphr_total_time / our_total_time)
+#     sssp_results["normal-graphr-energy"].append(graphr_total_energy / our_total_energy)
+#     sssp_results["normal-graphr-efficiency"].append(graphr_efficiency / our_efficiency)
 
 # Wiki-Vote
 
-experiment_results["our-total-time"].append(0.009225)
-experiment_results["our-total-energy"].append(0.000233)
-experiment_results["our-efficiency"].append(0.001673)
-experiment_results["graphr-total-time"].append(0.158245)
-experiment_results["graphr-total-energy"].append(0.044459)
-experiment_results["graphr-efficiency"].append(0.001673)
-experiment_results["gpu-total-time"].append(19.924*10**-3)
-experiment_results["gpu-total-energy"].append(57.33*19.924*10**-3)
+sssp_results["our-total-time"].append(0.009225)
+sssp_results["our-total-energy"].append(0.000233)
+sssp_results["our-efficiency"].append(0.001673)
+sssp_results["graphr-total-time"].append(0.158245)
+sssp_results["graphr-total-energy"].append(0.044459)
+sssp_results["graphr-efficiency"].append(0.001673)
+sssp_results["gpu-total-time"].append(19.924*10**-3)
+sssp_results["gpu-total-energy"].append(57.33*19.924*10**-3)
 
 #amazon
 
-experiment_results["our-total-time"].append(0.115538)
-experiment_results["our-total-energy"].append(0.000689)
-experiment_results["our-efficiency"].append(0.000378)
-experiment_results["graphr-total-time"].append(2.627140)
-experiment_results["graphr-total-energy"].append(0.832344)
-experiment_results["graphr-efficiency"].append(0.000378)
-experiment_results["gpu-total-time"].append(92247.1*10**-3)
-experiment_results["gpu-total-energy"].append(104*92247.1*10**-3)
+sssp_results["our-total-time"].append(0.115538)
+sssp_results["our-total-energy"].append(0.000689)
+sssp_results["our-efficiency"].append(0.000378)
+sssp_results["graphr-total-time"].append(2.627140)
+sssp_results["graphr-total-energy"].append(0.832344)
+sssp_results["graphr-efficiency"].append(0.000378)
+sssp_results["gpu-total-time"].append(92247.1*10**-3)
+sssp_results["gpu-total-energy"].append(104*92247.1*10**-3)
 
 # soc-Slashdot 
 
-experiment_results["our-total-time"].append(0.208975)
-experiment_results["our-total-energy"].append(0.001167)
-experiment_results["our-efficiency"].append(0.000845)
-experiment_results["graphr-total-time"].append(3.878714)
-experiment_results["graphr-total-energy"].append(0.762019)
-experiment_results["graphr-efficiency"].append(0.000845)
-experiment_results["gpu-total-time"].append(1475.75*10**-3)
-experiment_results["gpu-total-energy"].append(99.52*1475.75*10**-3)
+sssp_results["our-total-time"].append(0.208975)
+sssp_results["our-total-energy"].append(0.001167)
+sssp_results["our-efficiency"].append(0.000845)
+sssp_results["graphr-total-time"].append(3.878714)
+sssp_results["graphr-total-energy"].append(0.762019)
+sssp_results["graphr-efficiency"].append(0.000845)
+sssp_results["gpu-total-time"].append(1475.75*10**-3)
+sssp_results["gpu-total-energy"].append(99.52*1475.75*10**-3)
 
 # soc-Epinions 
 
-experiment_results["our-total-time"].append(0.126085)
-experiment_results["our-total-energy"].append(0.001007)
-experiment_results["our-efficiency"].append(0.000838)
-experiment_results["graphr-total-time"].append(2.524755)
-experiment_results["graphr-total-energy"].append(0.611421)
-experiment_results["graphr-efficiency"].append(0.000838)
-experiment_results["gpu-total-time"].append(1307.6*10**-3)
-experiment_results["gpu-total-energy"].append(98*1307.6*10**-3)
+sssp_results["our-total-time"].append(0.126085)
+sssp_results["our-total-energy"].append(0.001007)
+sssp_results["our-efficiency"].append(0.000838)
+sssp_results["graphr-total-time"].append(2.524755)
+sssp_results["graphr-total-energy"].append(0.611421)
+sssp_results["graphr-efficiency"].append(0.000838)
+sssp_results["gpu-total-time"].append(1307.6*10**-3)
+sssp_results["gpu-total-energy"].append(98*1307.6*10**-3)
 
 # com-Orkut
 
-experiment_results["our-total-time"].append(1.400289)
-experiment_results["our-total-energy"].append(0.005045)
-experiment_results["our-efficiency"].append(0.000442)
-experiment_results["graphr-total-time"].append(29.141508)
-experiment_results["graphr-total-energy"].append(6.826764)
-experiment_results["graphr-efficiency"].append(0.000442)
-experiment_results["gpu-total-time"].append(1.50936*10**3)
-experiment_results["gpu-total-energy"].append(111*1.50936*10**3)
+sssp_results["our-total-time"].append(1.400289)
+sssp_results["our-total-energy"].append(0.005045)
+sssp_results["our-efficiency"].append(0.000442)
+sssp_results["graphr-total-time"].append(29.141508)
+sssp_results["graphr-total-energy"].append(6.826764)
+sssp_results["graphr-efficiency"].append(0.000442)
+sssp_results["gpu-total-time"].append(1.50936*10**3)
+sssp_results["gpu-total-energy"].append(111*1.50936*10**3)
 
+# Wiki-Vote
+
+bfs_results["our-total-time"].append(0.008744)
+bfs_results["our-total-energy"].append(0.000131)
+bfs_results["our-efficiency"].append(0.001673)
+bfs_results["graphr-total-time"].append(0.090107)
+bfs_results["graphr-total-energy"].append(0.002497)
+bfs_results["graphr-efficiency"].append(0.001673)
+bfs_results["gpu-total-time"].append(19.924*10**-3)
+bfs_results["gpu-total-energy"].append(57.33*19.924*10**-3)
+
+#amazon
+
+bfs_results["our-total-time"].append(0.109778)
+bfs_results["our-total-energy"].append(0.000656)
+bfs_results["our-efficiency"].append(0.000378)
+bfs_results["graphr-total-time"].append(1.811297)
+bfs_results["graphr-total-energy"].append(0.048653)
+bfs_results["graphr-efficiency"].append(0.000378)
+bfs_results["gpu-total-time"].append(92247.1*10**-3)
+bfs_results["gpu-total-energy"].append(104*92247.1*10**-3)
+
+# soc-Slashdot 
+
+bfs_results["our-total-time"].append(0.189453)
+bfs_results["our-total-energy"].append(0.000656)
+bfs_results["our-efficiency"].append(0.000845)
+bfs_results["graphr-total-time"].append(1.111653)
+bfs_results["graphr-total-energy"].append(0.036200)
+bfs_results["graphr-efficiency"].append(0.000845)
+bfs_results["gpu-total-time"].append(1475.75*10**-3)
+bfs_results["gpu-total-energy"].append(99.52*1475.75*10**-3)
+
+# soc-Epinions 
+
+bfs_results["our-total-time"].append(0.116103)
+bfs_results["our-total-energy"].append(0.000566)
+bfs_results["our-efficiency"].append(0.000838)
+bfs_results["graphr-total-time"].append(1.109890)
+bfs_results["graphr-total-energy"].append(0.032372)
+bfs_results["graphr-efficiency"].append(0.000838)
+bfs_results["gpu-total-time"].append(1307.6*10**-3)
+bfs_results["gpu-total-energy"].append(98*1307.6*10**-3)
+
+# com-Orkut
+
+bfs_results["our-total-time"].append(1.279167)
+bfs_results["our-total-energy"].append(0.002835)
+bfs_results["our-efficiency"].append(0.000442)
+bfs_results["graphr-total-time"].append(12.042871)
+bfs_results["graphr-total-energy"].append(0.356048)
+bfs_results["graphr-efficiency"].append(0.000442)
+bfs_results["gpu-total-time"].append(1.50936*10**3)
+bfs_results["gpu-total-energy"].append(111*1.50936*10**3)
 
 for i in range(len(experiments)):
-    graphr_normal_time = experiment_results["graphr-total-time"][i] / \
-    experiment_results["our-total-time"][i]
-    graphr_normal_energy = experiment_results["graphr-total-energy"][i] / \
-    experiment_results["our-total-energy"][i]
-    graphr_normal_efficiency = experiment_results["graphr-efficiency"][i] / \
-    experiment_results["our-efficiency"][i]
+    graphr_normal_time = sssp_results["graphr-total-time"][i] / \
+    sssp_results["our-total-time"][i]
+    graphr_normal_energy = sssp_results["graphr-total-energy"][i] / \
+    sssp_results["our-total-energy"][i]
+    graphr_normal_efficiency = sssp_results["graphr-efficiency"][i] / \
+    sssp_results["our-efficiency"][i]
 
-    experiment_results["normal-graphr-time"].append(graphr_normal_time)
-    experiment_results["normal-graphr-energy"].append(graphr_normal_energy)
-    experiment_results["normal-graphr-efficiency"].append(graphr_normal_efficiency)
+    sssp_results["normal-graphr-time"].append(graphr_normal_time)
+    sssp_results["normal-graphr-energy"].append(graphr_normal_energy)
+    sssp_results["normal-graphr-efficiency"].append(graphr_normal_efficiency)
 
-    gpu_normal_time = experiment_results["gpu-total-time"][i] / \
-    experiment_results["our-total-time"][i]
-    gpu_normal_energy = experiment_results["gpu-total-energy"][i] / \
-    experiment_results["our-total-energy"][i]
+    gpu_normal_time = sssp_results["gpu-total-time"][i] / \
+    sssp_results["our-total-time"][i]
+    gpu_normal_energy = sssp_results["gpu-total-energy"][i] / \
+    sssp_results["our-total-energy"][i]
 
-    experiment_results["normal-graphsar-time"].append(graphr_normal_time / \
+    sssp_results["normal-graphsar-time"].append(graphr_normal_time / \
             graphsar_time_factor)
-    experiment_results["normal-graphsar-energy"].append(graphr_normal_energy / \
+    sssp_results["normal-graphsar-energy"].append(graphr_normal_energy / \
             graphsar_energy_factor)
 
-    experiment_results["normal-gpu-time"].append(gpu_normal_time)
-    experiment_results["normal-gpu-energy"].append(gpu_normal_energy)
+    sssp_results["normal-gpu-time"].append(gpu_normal_time)
+    sssp_results["normal-gpu-energy"].append(gpu_normal_energy)
+
+    graphr_normal_time = bfs_results["graphr-total-time"][i] / \
+    bfs_results["our-total-time"][i]
+    graphr_normal_energy = bfs_results["graphr-total-energy"][i] / \
+    bfs_results["our-total-energy"][i]
+    graphr_normal_efficiency = bfs_results["graphr-efficiency"][i] / \
+    bfs_results["our-efficiency"][i]
+
+    bfs_results["normal-graphr-time"].append(graphr_normal_time)
+    bfs_results["normal-graphr-energy"].append(graphr_normal_energy)
+    bfs_results["normal-graphr-efficiency"].append(graphr_normal_efficiency)
+
+    gpu_normal_time = bfs_results["gpu-total-time"][i] / \
+    bfs_results["our-total-time"][i]
+    gpu_normal_energy = bfs_results["gpu-total-energy"][i] / \
+    bfs_results["our-total-energy"][i]
+
+    bfs_results["normal-graphsar-time"].append(graphr_normal_time / \
+            graphsar_time_factor)
+    bfs_results["normal-graphsar-energy"].append(graphr_normal_energy / \
+            graphsar_energy_factor)
+
+    bfs_results["normal-gpu-time"].append(gpu_normal_time)
+    bfs_results["normal-gpu-energy"].append(gpu_normal_energy)
 
 colors = sns.color_palette("gist_stern")
 graph_colors = {
@@ -163,45 +262,45 @@ x = np.arange(len(experiments))
 normals = [1] * len(experiments)
 
 fig, ax = plt.subplots()
-rects1 = ax.bar(x, experiment_results["normal-graphr-time"], width,
+rects1 = ax.bar(x, sssp_results["normal-graphr-time"], width,
         label='GraphR', color=graph_colors['graphr'])
 rects2 = ax.bar(x+width, normals, width,
         label='SparseMEM', color=graph_colors['our'])
-rects3 = ax.bar(x+2*width, experiment_results["normal-gpu-time"], width,
+rects3 = ax.bar(x+2*width, sssp_results["normal-gpu-time"], width,
         label='GPU', color=graph_colors['gpu'])
-rects4 = ax.bar(x+3*width, experiment_results["normal-graphsar-time"], width,
+rects4 = ax.bar(x+3*width, sssp_results["normal-graphsar-time"], width,
         label='GraphSAR', color=graph_colors['graphsar'])
 ax.legend()
 ax.set_yscale('log')
 ax.set_xticks(x + 2*width, experiments)
 ax.set_xlabel("Dataset")
 ax.set_ylabel("Speedup")
-ax.set_title("Normalized time difference per dataset")
+ax.set_title("Normalized time difference per dataset - SSSP")
 
 fig.tight_layout()
-plt.savefig('time.pdf')
+plt.savefig('sssp_time.pdf')
 
 fig, ax = plt.subplots()
-rects1 = ax.bar(x, experiment_results["normal-graphr-energy"], width,
+rects1 = ax.bar(x, sssp_results["normal-graphr-energy"], width,
         label='GraphR', color=graph_colors['graphr'])
 rects2 = ax.bar(x+width, normals, width,
         label='Our', color=graph_colors['our'])
-rects3 = ax.bar(x+2*width, experiment_results["normal-gpu-energy"], width,
+rects3 = ax.bar(x+2*width, sssp_results["normal-gpu-energy"], width,
         label='GPU', color=graph_colors['gpu'])
-rects4 = ax.bar(x+3*width, experiment_results["normal-graphsar-energy"], width,
+rects4 = ax.bar(x+3*width, sssp_results["normal-graphsar-energy"], width,
         label='GraphSAR', color=graph_colors['graphsar'])
 ax.legend()
 ax.set_yscale('log')
 ax.set_xticks(x + 2*width, experiments)
 ax.set_xlabel("Dataset")
 ax.set_ylabel("Energy improvement")
-ax.set_title("Normalized energy difference per dataset")
+ax.set_title("Normalized energy difference per dataset - SSSP")
 
 fig.tight_layout()
-plt.savefig('energy.pdf')
+plt.savefig('sssp_energy.pdf')
 
 fig, ax = plt.subplots()
-rects1 = ax.bar(x-width/2, experiment_results["normal-graphr-efficiency"], width,
+rects1 = ax.bar(x-width/2, sssp_results["normal-graphr-efficiency"], width,
         label='GraphR', color=graph_colors['graphr'])
 rects2 = ax.bar(x+width/2, normals, width,
         label='Our', color=graph_colors['our'])
@@ -210,7 +309,60 @@ ax.legend()
 ax.set_xticks(x, experiments)
 ax.set_xlabel("Dataset")
 ax.set_ylabel("Efficiency")
-ax.set_title("Normalized efficiency difference per dataset")
+ax.set_title("Normalized efficiency difference per dataset - SSSP")
 
 fig.tight_layout()
-plt.savefig('efficiency.pdf')
+plt.savefig('sssp_efficiency.pdf')
+
+fig, ax = plt.subplots()
+rects1 = ax.bar(x, bfs_results["normal-graphr-time"], width,
+        label='GraphR', color=graph_colors['graphr'])
+rects2 = ax.bar(x+width, normals, width,
+        label='SparseMEM', color=graph_colors['our'])
+rects3 = ax.bar(x+2*width, bfs_results["normal-gpu-time"], width,
+        label='GPU', color=graph_colors['gpu'])
+rects4 = ax.bar(x+3*width, bfs_results["normal-graphsar-time"], width,
+        label='GraphSAR', color=graph_colors['graphsar'])
+ax.legend()
+ax.set_yscale('log')
+ax.set_xticks(x + 2*width, experiments)
+ax.set_xlabel("Dataset")
+ax.set_ylabel("Speedup")
+ax.set_title("Normalized time difference per dataset - BFS")
+
+fig.tight_layout()
+plt.savefig('bfs_time.pdf')
+
+fig, ax = plt.subplots()
+rects1 = ax.bar(x, bfs_results["normal-graphr-energy"], width,
+        label='GraphR', color=graph_colors['graphr'])
+rects2 = ax.bar(x+width, normals, width,
+        label='Our', color=graph_colors['our'])
+rects3 = ax.bar(x+2*width, bfs_results["normal-gpu-energy"], width,
+        label='GPU', color=graph_colors['gpu'])
+rects4 = ax.bar(x+3*width, bfs_results["normal-graphsar-energy"], width,
+        label='GraphSAR', color=graph_colors['graphsar'])
+ax.legend()
+ax.set_yscale('log')
+ax.set_xticks(x + 2*width, experiments)
+ax.set_xlabel("Dataset")
+ax.set_ylabel("Energy improvement")
+ax.set_title("Normalized energy difference per dataset - BFS")
+
+fig.tight_layout()
+plt.savefig('bfs_energy.pdf')
+
+fig, ax = plt.subplots()
+rects1 = ax.bar(x-width/2, bfs_results["normal-graphr-efficiency"], width,
+        label='GraphR', color=graph_colors['graphr'])
+rects2 = ax.bar(x+width/2, normals, width,
+        label='Our', color=graph_colors['our'])
+
+ax.legend()
+ax.set_xticks(x, experiments)
+ax.set_xlabel("Dataset")
+ax.set_ylabel("Efficiency")
+ax.set_title("Normalized efficiency difference per dataset - BFS")
+
+fig.tight_layout()
+plt.savefig('bfs_efficiency.pdf')

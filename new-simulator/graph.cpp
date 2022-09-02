@@ -80,6 +80,6 @@ SubGraph Graph::get_subgraph_at(size_t subgraph) const {
 	auto upper_row = std::upper_bound(temp.begin(), temp.end(),
 			Tuple{(row + 1) * _max_row - 1, 0, 0}, row_comp);
 
-	return SubGraph{row * _max_row, col * _max_col,
+	return SubGraph{_max_row, row * _max_row, col * _max_col,
 		std::vector<Tuple>(lower_row, upper_row)};
 }

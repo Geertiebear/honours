@@ -99,6 +99,41 @@ public:
 		return std::make_tuple(stats, array);
 	}
 
+	std::tuple<Stats, std::vector<T>> multiReadWithInput(size_t row,
+			size_t num_rows, size_t col, size_t num_cols, double input) {
+		Stats stats;
+
+		// num will always be number of columns
+		const auto adc_activations = _options.cols_per_adc *
+			_options.datatype_size * _options.input_size;
+		const auto adc_latency = adc_activations * _analogue_latency();
+		const auto total_adc_acts = num_rows * num_cols * 
+			 _options.datatype_size * _options.input_size;
+		const auto adc_energy = total_adc_acts * _analogue_energy();
+		const auto static_latency = _options.static_latency;
+		const auto static_energy = num_rows * num_cols * _options.static_energy;
+
+		stats.total_crossbar_time += adc_latency + _options.read_latency;
+		stats.total_crossbar_energy += adc_energy +
+			num_rows * num_cols * _options.datatype_size * _options.read_energy;
+		stats.total_periphery_time += static_latency;
+		stats.total_periphery_energy += static_energy;
+		stats.num_read_cells += num_cols * num_cols;
+		stats.num_adc_acts += total_adc_acts;
+
+		std::vector<T> array(num_cols);
+		for (; row < num_rows; row++) {
+			for (size_t col_offset = col; col_offset < num_cols; col_offset++) {
+				auto index = (row * _options.num_cols) + col_offset;
+				array[col_offset] = array[col_offset] + _crossbar[index];
+			}
+		}
+		std::transform(array.begin(), array.end(), array.begin(), [input] (auto a) {
+				return a + input;
+		});
+		return std::make_tuple(stats, array);
+	}
+
 	Stats writeRow(size_t row, size_t offset, size_t num, const std::vector<T> &vals) {
 		Stats stats;
 

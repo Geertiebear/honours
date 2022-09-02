@@ -7,10 +7,11 @@
 
 struct Tuple {
 	size_t i, j;
-	int weight;
+	float weight;
 };
 
 struct SubGraph {
+	size_t dimensions;
 	size_t row_offset, col_offset;
 	std::vector<Tuple> tuples;
 };
