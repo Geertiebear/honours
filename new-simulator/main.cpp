@@ -382,6 +382,7 @@ void run_pagerank(char **argv) {
 
 	const double r = 0.85f;
 	const double tol = 1e-9;
+	const int max_iterations = 1;
 
 	auto graph = std::make_shared<Graph>(argv[1], 128, 128);
 	std::cout << "Read graph of size " << graph->get_dimensions() << std::endl;
@@ -390,6 +391,7 @@ void run_pagerank(char **argv) {
 		Data(unsigned int start, size_t graph_dimension,
 				size_t crossbar_size)
 			:
+			iterations(0),
 			graph_dimension(graph_dimension),
 			teleport_prob(1.0 / static_cast<double>(graph_dimension)),
 			score(round_up(graph_dimension, crossbar_size),
@@ -397,6 +399,7 @@ void run_pagerank(char **argv) {
 			new_score(round_up(graph_dimension, crossbar_size))
 		{
 		}
+		int iterations;
 		size_t graph_dimension;
 		double teleport_prob;
 		std::vector<double> score;
@@ -412,7 +415,7 @@ void run_pagerank(char **argv) {
 	};
 
 	// Should aggregate the new scores, and then swap new and old scores.
-	auto aggregate_func = [tol] (Data &data,
+	auto aggregate_func = [tol, max_iterations] (Data &data,
 			const std::vector<Data> &local_datas) -> bool {
 		for (auto &local_data : local_datas)
 			add_vectors(data.new_score, local_data.new_score);	
@@ -426,6 +429,10 @@ void run_pagerank(char **argv) {
 		data.score = std::move(data.new_score);
 		data.new_score.clear();
 		data.new_score.resize(data.score.size());
+
+		data.iterations++;
+		if (data.iterations >= max_iterations)
+			converged = true;
 
 		return !converged;
 	};
@@ -558,9 +565,9 @@ void run_pagerank(char **argv) {
 }
 int main(int argc, char **argv) {
 	std::cout << "Running SSSP" << std::endl;
-	//run_sssp(argv);
+	run_sssp(argv);
 	std::cout << "Running BFS" << std::endl;
-	//run_bfs(argv);
+	run_bfs(argv);
 	std::cout << "Running PageRank" << std::endl;
 	run_pagerank(argv);
 	return 0;

@@ -107,18 +107,19 @@ public:
 		const auto adc_activations = _options.cols_per_adc *
 			_options.datatype_size * _options.input_size;
 		const auto adc_latency = adc_activations * _analogue_latency();
-		const auto total_adc_acts = num_rows * num_cols * 
+		const auto total_adc_acts = num_cols * 
 			 _options.datatype_size * _options.input_size;
 		const auto adc_energy = total_adc_acts * _analogue_energy();
 		const auto static_latency = _options.static_latency;
-		const auto static_energy = num_rows * num_cols * _options.static_energy;
+		const auto static_energy = num_cols * _options.static_energy;
 
-		stats.total_crossbar_time += adc_latency + _options.read_latency;
+		stats.total_crossbar_time += adc_latency +
+			_options.read_latency * _options.input_size;
 		stats.total_crossbar_energy += adc_energy +
 			num_rows * num_cols * _options.datatype_size * _options.read_energy;
 		stats.total_periphery_time += static_latency;
 		stats.total_periphery_energy += static_energy;
-		stats.num_read_cells += num_cols * num_cols;
+		stats.num_read_cells += num_cols * num_rows;
 		stats.num_adc_acts += total_adc_acts;
 
 		std::vector<T> array(num_cols);
