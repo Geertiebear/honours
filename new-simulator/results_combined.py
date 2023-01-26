@@ -300,6 +300,11 @@ pagerank_results["graphr-efficiency"].append(623963008)
 pagerank_results["gpu-total-time"].append(16315.1 / 13 * 10 **-3)
 pagerank_results["gpu-total-energy"].append(104 * 16315.1 / 13 * 10 **-3)
 
+time_average = 0.0
+time_num = 0
+energy_average = 0.0
+energy_num = 0
+
 for i in range(len(experiments)):
     graphr_normal_time = sssp_results["gpu-total-time"][i] / \
     sssp_results["graphr-total-time"][i]
@@ -308,19 +313,39 @@ for i in range(len(experiments)):
     graphr_normal_efficiency = sssp_results["graphr-efficiency"][i] / \
     sssp_results["our-efficiency"][i]
 
+    time_average += sssp_results["graphr-total-time"][i] / \
+            sssp_results["our-total-time"][i]
+    time_num += 1
+    energy_average += sssp_results["graphr-total-energy"][i] / \
+            sssp_results["our-total-energy"][i]
+    energy_num += 1
+
     sssp_results["normal-graphr-time"].append(graphr_normal_time)
     sssp_results["normal-graphr-energy"].append(graphr_normal_energy)
     sssp_results["normal-graphr-efficiency"].append(graphr_normal_efficiency)
 
     gpu_normal_time = sssp_results["gpu-total-time"][i] / \
     sssp_results["our-total-time"][i]
+    #time_average += gpu_normal_time
+    #time_num += 1
     gpu_normal_energy = sssp_results["gpu-total-energy"][i] / \
     sssp_results["our-total-energy"][i]
+    #energy_average += gpu_normal_energy
+    #energy_num += 1
 
     sssp_results["normal-graphsar-time"].append(graphr_normal_time * \
             graphsar_time_factor)
     sssp_results["normal-graphsar-energy"].append(graphr_normal_energy * \
             graphsar_energy_factor)
+
+    gpu_normal_time = sssp_results["graphr-total-time"][i] / \
+    sssp_results["our-total-time"][i] * graphsar_time_factor
+    time_average += gpu_normal_time
+    time_num += 1
+    gpu_normal_energy = sssp_results["graphr-total-energy"][i] / \
+    sssp_results["our-total-energy"][i] * graphsar_energy_factor
+    energy_average += gpu_normal_energy
+    energy_num += 1
 
     sssp_results["normal-gpu-time"].append(gpu_normal_time)
     sssp_results["normal-gpu-energy"].append(gpu_normal_energy)
@@ -332,6 +357,13 @@ for i in range(len(experiments)):
     graphr_normal_efficiency = bfs_results["graphr-efficiency"][i] / \
     bfs_results["our-efficiency"][i]
 
+    time_average += bfs_results["graphr-total-time"][i] / \
+            bfs_results["our-total-time"][i]
+    time_num += 1
+    energy_average += bfs_results["graphr-total-energy"][i] / \
+            bfs_results["our-total-energy"][i]
+    energy_num += 1
+
     bfs_results["normal-graphr-time"].append(graphr_normal_time)
     bfs_results["normal-graphr-energy"].append(graphr_normal_energy)
     bfs_results["normal-graphr-efficiency"].append(graphr_normal_efficiency)
@@ -341,10 +373,28 @@ for i in range(len(experiments)):
     gpu_normal_energy = bfs_results["gpu-total-energy"][i] / \
     bfs_results["our-total-energy"][i]
 
+    gpu_normal_time = bfs_results["gpu-total-time"][i] / \
+    bfs_results["our-total-time"][i]
+    #time_average += gpu_normal_time
+    #time_num += 1
+    gpu_normal_energy = bfs_results["gpu-total-energy"][i] / \
+    bfs_results["our-total-energy"][i]
+    #energy_average += gpu_normal_energy
+    #energy_num += 1
+
     bfs_results["normal-graphsar-time"].append(graphr_normal_time * \
             graphsar_time_factor)
     bfs_results["normal-graphsar-energy"].append(graphr_normal_energy * \
             graphsar_energy_factor)
+
+    gpu_normal_time = bfs_results["graphr-total-time"][i] / \
+    bfs_results["our-total-time"][i] * graphsar_time_factor
+    time_average += gpu_normal_time
+    time_num += 1
+    gpu_normal_energy = bfs_results["graphr-total-energy"][i] / \
+    bfs_results["our-total-energy"][i] * graphsar_energy_factor
+    energy_average += gpu_normal_energy
+    energy_num += 1
 
     bfs_results["normal-gpu-time"].append(gpu_normal_time)
     bfs_results["normal-gpu-energy"].append(gpu_normal_energy)
@@ -357,19 +407,39 @@ for i in range(len(pagerank_experiments)):
     graphr_normal_efficiency = pagerank_results["graphr-efficiency"][i] / \
     pagerank_results["our-efficiency"][i]
 
+    time_average += pagerank_results["graphr-total-time"][i] / \
+            pagerank_results["our-total-time"][i]
+    time_num += 1
+    energy_average += pagerank_results["graphr-total-energy"][i] / \
+            pagerank_results["our-total-energy"][i]
+    energy_num += 1
+
     pagerank_results["normal-graphr-time"].append(graphr_normal_time)
     pagerank_results["normal-graphr-energy"].append(graphr_normal_energy)
     pagerank_results["normal-graphr-efficiency"].append(graphr_normal_efficiency)
 
     gpu_normal_time = pagerank_results["gpu-total-time"][i] / \
     pagerank_results["our-total-time"][i]
+    #time_average += gpu_normal_time
+    #time_num += 1
     gpu_normal_energy = pagerank_results["gpu-total-energy"][i] / \
     pagerank_results["our-total-energy"][i]
+    #energy_average += gpu_normal_energy
+    #energy_num += 1
 
     pagerank_results["normal-graphsar-time"].append(graphr_normal_time * \
             graphsar_time_factor)
     pagerank_results["normal-graphsar-energy"].append(graphr_normal_energy * \
             graphsar_energy_factor)
+
+    gpu_normal_time = pagerank_results["graphr-total-time"][i] / \
+    pagerank_results["our-total-time"][i] * graphsar_time_factor
+    time_average += gpu_normal_time
+    time_num += 1
+    gpu_normal_energy = pagerank_results["graphr-total-energy"][i] / \
+    pagerank_results["our-total-energy"][i] * graphsar_energy_factor
+    energy_average += gpu_normal_energy
+    energy_num += 1
 
     pagerank_results["normal-gpu-time"].append(gpu_normal_time)
     pagerank_results["normal-gpu-energy"].append(gpu_normal_energy)
@@ -390,81 +460,81 @@ pagerank_normals = [1] * len(pagerank_experiments)
 
 fig, axs = plt.subplots(2, 3)
 ax = axs[0, 0];
-rects1 = ax.bar(x+width, sssp_results["normal-graphr-time"], width,
-        label='GraphR', color=graph_colors['graphr'])
 rects2 = ax.bar(x, normals, width,
         label='GPU', color=graph_colors['gpu'])
-rects3 = ax.bar(x+3*width, sssp_results["normal-gpu-time"], width,
-        label='SparseMEM', color=graph_colors['our'])
+rects1 = ax.bar(x+width, sssp_results["normal-graphr-time"], width,
+        label='GraphR', color=graph_colors['graphr'])
 rects4 = ax.bar(x+2*width, sssp_results["normal-graphsar-time"], width,
         label='GraphSAR', color=graph_colors['graphsar'])
+rects3 = ax.bar(x+3*width, sssp_results["normal-gpu-time"], width,
+        label='SparseMEM', color=graph_colors['our'])
 ax.set_yscale('log')
 ax.set_title("SSSP", fontsize=12)
 ax.set_xticks(x + 2*width, experiments)
 ax.set_ylabel("Speedup", fontsize=12)
 
 ax = axs[1, 0]
-rects1 = ax.bar(x+width, sssp_results["normal-graphr-energy"], width,
-        label='GraphR', color=graph_colors['graphr'])
 rects2 = ax.bar(x, normals, width,
         label='GPU', color=graph_colors['gpu'])
-rects3 = ax.bar(x+3*width, sssp_results["normal-gpu-energy"], width,
-        label='SparseMEM', color=graph_colors['our'])
+rects1 = ax.bar(x+width, sssp_results["normal-graphr-energy"], width,
+        label='GraphR', color=graph_colors['graphr'])
 rects4 = ax.bar(x+2*width, sssp_results["normal-graphsar-energy"], width,
         label='GraphSAR', color=graph_colors['graphsar'])
+rects3 = ax.bar(x+3*width, sssp_results["normal-gpu-energy"], width,
+        label='SparseMEM', color=graph_colors['our'])
 ax.set_yscale('log')
 ax.set_xticks(x + 2*width, experiments)
 ax.set_xlabel("Dataset", fontsize=12)
 ax.set_ylabel("Energy improvement", fontsize=12)
 
 ax = axs[0, 1]
-rects1 = ax.bar(x+width, bfs_results["normal-graphr-time"], width,
-        label='GraphR', color=graph_colors['graphr'])
 rects2 = ax.bar(x, normals, width,
         label='GPU', color=graph_colors['gpu'])
-rects3 = ax.bar(x+3*width, bfs_results["normal-gpu-time"], width,
-        label='SparseMEM', color=graph_colors['our'])
+rects1 = ax.bar(x+width, bfs_results["normal-graphr-time"], width,
+        label='GraphR', color=graph_colors['graphr'])
 rects4 = ax.bar(x+2*width, bfs_results["normal-graphsar-time"], width,
         label='GraphSAR', color=graph_colors['graphsar'])
+rects3 = ax.bar(x+3*width, bfs_results["normal-gpu-time"], width,
+        label='SparseMEM', color=graph_colors['our'])
 ax.set_title("BFS", fontsize=12)
 ax.set_yscale('log')
 ax.set_xticks(x + 2*width, experiments)
 
 ax = axs[1, 1]
-rects1 = ax.bar(x+width, bfs_results["normal-graphr-energy"], width,
-        label='GraphR', color=graph_colors['graphr'])
 rects2 = ax.bar(x, normals, width,
         label='GPU', color=graph_colors['gpu'])
-rects3 = ax.bar(x+3*width, bfs_results["normal-gpu-energy"], width,
-        label='SparseMEM', color=graph_colors['our'])
+rects1 = ax.bar(x+width, bfs_results["normal-graphr-energy"], width,
+        label='GraphR', color=graph_colors['graphr'])
 rects4 = ax.bar(x+2*width, bfs_results["normal-graphsar-energy"], width,
         label='GraphSAR', color=graph_colors['graphsar'])
+rects3 = ax.bar(x+3*width, bfs_results["normal-gpu-energy"], width,
+        label='SparseMEM', color=graph_colors['our'])
 ax.set_yscale('log')
 ax.set_xticks(x + 2*width, experiments)
 ax.set_xlabel("Dataset", fontsize=12)
 
 ax = axs[0, 2]
-rects1 = ax.bar(pagerank_x+width, pagerank_results["normal-graphr-time"], width,
-        label='GraphR', color=graph_colors['graphr'])
 rects2 = ax.bar(pagerank_x, pagerank_normals, width,
         label='GPU', color=graph_colors['gpu'])
-rects3 = ax.bar(pagerank_x+3*width, pagerank_results["normal-gpu-time"], width,
-        label='SparseMEM', color=graph_colors['our'])
+rects1 = ax.bar(pagerank_x+width, pagerank_results["normal-graphr-time"], width,
+        label='GraphR', color=graph_colors['graphr'])
 rects4 = ax.bar(pagerank_x+2*width, pagerank_results["normal-graphsar-time"], width,
         label='GraphSAR', color=graph_colors['graphsar'])
+rects3 = ax.bar(pagerank_x+3*width, pagerank_results["normal-gpu-time"], width,
+        label='SparseMEM', color=graph_colors['our'])
 ax.set_yscale('log')
 ax.set_title("PageRank", fontsize=12)
 ax.set_xticks(pagerank_x + 2*width, pagerank_experiments)
 
 ax = axs[1, 2]
-rects1 = ax.bar(pagerank_x+width, pagerank_results["normal-graphr-energy"], width,
-        label='GraphR', color=graph_colors['graphr'])
 rects2 = ax.bar(pagerank_x, pagerank_normals, width,
         label='GPU', color=graph_colors['gpu'])
-rects3 = ax.bar(pagerank_x+3*width, pagerank_results["normal-gpu-energy"], width,
-        label='SparseMEM', color=graph_colors['our'])
+rects1 = ax.bar(pagerank_x+width, pagerank_results["normal-graphr-energy"], width,
+        label='GraphR', color=graph_colors['graphr'])
 rects4 = ax.bar(pagerank_x+2*width, pagerank_results["normal-graphsar-energy"], width,
         label='GraphSAR', color=graph_colors['graphsar'])
+rects3 = ax.bar(pagerank_x+3*width, pagerank_results["normal-gpu-energy"], width,
+        label='SparseMEM', color=graph_colors['our'])
 ax.set_yscale('log')
 ax.set_xticks(pagerank_x + 2*width, pagerank_experiments)
 ax.set_xlabel("Dataset", fontsize=12)
@@ -477,7 +547,7 @@ fig.set_size_inches(4*3, 2*2)
 plt.tight_layout(rect=[0, 0, 1, 0.95])
 plt.savefig('combined.pdf')
 
-fig, axs = plt.subplots(1, 3)
+fig, axs = plt.subplots(1, 2)
 ax = axs[0]
 rects1 = ax.bar(x-width/2, sssp_results["normal-graphr-efficiency"], width,
         label='SparseMEM', color=graph_colors['our'])
@@ -488,19 +558,9 @@ ax.set_yscale('log')
 ax.set_xticks(x, experiments)
 ax.set_xlabel("Dataset", fontsize=12)
 ax.set_title("SSSP", fontsize=12)
-ax.set_ylabel("Efficiency Improvement", fontsize=12)
+ax.set_ylabel("Device Utilization", fontsize=12)
 
 ax = axs[1]
-rects1 = ax.bar(x-width/2, bfs_results["normal-graphr-efficiency"], width,
-        label='SparseMEM', color=graph_colors['our'])
-rects2 = ax.bar(x+width/2, normals, width,
-        label='GraphR', color=graph_colors['graphr'])
-ax.set_yscale('log')
-ax.set_xticks(x, experiments)
-ax.set_title("BFS", fontsize=12)
-ax.set_xlabel("Dataset", fontsize=12)
-
-ax = axs[2]
 rects1 = ax.bar(pagerank_x-width/2, pagerank_results["normal-graphr-efficiency"], width,
         label='SparseMEM', color=graph_colors['our'])
 rects2 = ax.bar(pagerank_x+width/2, pagerank_normals, width,
@@ -513,8 +573,11 @@ ax.set_xlabel("Dataset", fontsize=12)
 
 lines, labels = ax.get_legend_handles_labels()
 fig.legend(lines, labels, ncol=4, loc="upper center", bbox_to_anchor=(0.55, 1),
-        prop={'size': 11})
-fig.set_size_inches(4*3, 2*2)
+        prop={'size': 10})
+fig.set_size_inches(4*1.3, 2*1.2)
 
-plt.tight_layout(rect=[0, 0, 1, 0.95])
+plt.tight_layout(rect=[0, 0, 1, 0.90])
 plt.savefig('combined_efficiency.pdf')
+
+print("time average: " + str(time_average/time_num))
+print("energy average: " + str(energy_average/energy_num))
