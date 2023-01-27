@@ -382,10 +382,14 @@ void run_pagerank(char **argv) {
 
 	const double r = 0.85f;
 	const double tol = 1e-9;
-	const int max_iterations = 1;
+	const int max_iterations = 100;
 
 	auto graph = std::make_shared<Graph>(argv[1], 128, 128);
 	std::cout << "Read graph of size " << graph->get_dimensions() << std::endl;
+
+	std::vector<int> degrees(graph->get_dimensions());
+	for (const auto &t : graph->get_tuples())
+		degrees[t.i]++;
 
 	struct Data {
 		Data(unsigned int start, size_t graph_dimension,
@@ -422,7 +426,7 @@ void run_pagerank(char **argv) {
 
 		double error = 0;
 		for (size_t i = 0; i < data.score.size(); i++)
-			error += std::abs(data.score[i] - data.new_score[i]);
+			error += std::abs(data.new_score[i] - data.score[i]);
 		std::cout << "error: " << error << std::endl;
 		bool converged = error < tol;
 
@@ -437,21 +441,12 @@ void run_pagerank(char **argv) {
 		return !converged;
 	};
 
-	auto degree = [r] (const SubGraph &subgraph, Data &data) {
+	auto degree = [r, &degrees] (const SubGraph &subgraph, Data &data) {
 		SubGraph new_subgraph = subgraph;
 
-		std::vector<int> degrees(subgraph.dimensions);
-
-		const auto row_offset = subgraph.row_offset;
-
-		for (auto &t : subgraph.tuples)
-			degrees[t.i - row_offset]++;
-
-		
 		for (auto &t : new_subgraph.tuples) {
-			assert(degrees[t.i - row_offset]);
 			t.weight = (r * (float)data.score[t.i] /
-					(float)degrees[t.i - row_offset]);
+					(float)degrees[t.i]);
 			assert(!std::isnan(t.weight));
 			assert(!std::isinf(t.weight));
 		}

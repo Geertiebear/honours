@@ -25,7 +25,7 @@ public:
 			}
 		}
 
-		Data(float weight)
+		explicit Data(float weight)
 		: weight(weight)
 		{}
 
@@ -123,7 +123,6 @@ public:
 				vals.clear();
 				vals.resize(max_cols);
 			}
-			//std::cout << "Programming " << tuple.weight << std::endl;
 			vals[tuple.j - _col_offset] = Data{tuple.weight};
 		}
 

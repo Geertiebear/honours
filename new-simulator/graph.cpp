@@ -51,6 +51,10 @@ size_t Graph::get_subgraph_col(size_t subgraph) const {
 	return subgraph / _max_col;
 }
 
+const std::vector<Tuple> &Graph::get_tuples() const {
+	return _tuples;
+}
+
 SubGraph Graph::get_subgraph_at(size_t subgraph) const {
 	const auto row = get_subgraph_row(subgraph);
 	const auto col = get_subgraph_col(subgraph);

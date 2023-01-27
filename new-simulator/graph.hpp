@@ -31,6 +31,7 @@ public:
 	size_t get_subgraph_row(size_t subgraph) const;
 	size_t get_subgraph_col(size_t subgraph) const;
 	SubGraph get_subgraph_at(size_t subgraph) const;
+	const std::vector<Tuple> &get_tuples() const;
 private:
 	size_t _max_row, _max_col;
 	size_t _dimensions;
