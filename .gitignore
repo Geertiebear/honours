@@ -1,8 +1,8 @@
 !*.m
-cpp/*
-new-simulator/*
+build/
 !*.cpp
 !*.hpp
 !.gitignore
 !*.py
 !meson.build
+compile_commands.json
